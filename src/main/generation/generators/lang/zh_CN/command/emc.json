@@ -1,0 +1,19 @@
+{
+	"command.projectexpansion.emc.invalid": "无效的数值。",
+	"command.projectexpansion.emc.add.success": "已成功给予 %s %s EMC，其现有 %s EMC。",
+	"command.projectexpansion.emc.add.success_self": "已成功向您的账户注入 %s EMC，现有 %s EMC。",
+	"command.projectexpansion.emc.add.notification": "%s 给予了您 %s EMC，您现有 %s EMC。",
+	"command.projectexpansion.emc.remove.success": "已成功扣除 %s 的 %s EMC，其现有 %s EMC。",
+	"command.projectexpansion.emc.remove.success_self": "已成功从您的账户扣除 %s EMC，现有 %s EMC。",
+	"command.projectexpansion.emc.remove.notification": "%s 扣除了您的 %s EMC，您现有 %s EMC。",
+	"command.projectexpansion.emc.remove.negative": "无法扣除 %s 的 %s EMC，否则其 EMC 将变为负数。",
+	"command.projectexpansion.emc.set.success": "已成功将 %s 的 EMC 设定为 %s。",
+	"command.projectexpansion.emc.set.success_self": "已成功将您的 EMC 设定为 %s。",
+	"command.projectexpansion.emc.set.notification": "您的 EMC 已被 %s 设定为 %s。",
+	"command.projectexpansion.emc.get.success_self": "您当前拥有 %s EMC。",
+	"command.projectexpansion.emc.get.success": "%s 当前拥有 %s EMC。",
+	"command.projectexpansion.emc.test.success": "%s 拥有足够扣除 %s 的 EMC。",
+	"command.projectexpansion.emc.test.success_self": "您拥有足够扣除 %s 的 EMC。",
+	"command.projectexpansion.emc.test.fail": "%s 没有足够扣除 %s 的 EMC。",
+	"command.projectexpansion.emc.test.fail_self": "您没有足够扣除 %s 的 EMC。"
+}

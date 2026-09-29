@@ -1,0 +1,21 @@
+{
+	"block.projectexpansion.power_flower.tooltip": "每 %s 个游戏刻生成一次 EMC%s。（20刻/秒）",
+	"block.projectexpansion.power_flower.emc": "产出 EMC：%s/秒",
+	"block.projectexpansion.power_flower.stack_emc": "整组产出 EMC：%s/秒",
+	"block.projectexpansion.basic_power_flower": "基础能量之花 [MK 1]",
+	"block.projectexpansion.dark_power_flower": "暗物质能量之花 [MK 2]",
+	"block.projectexpansion.red_power_flower": "红物质能量之花 [MK 3]",
+	"block.projectexpansion.magenta_power_flower": "绯红能量之花 [MK 4]",
+	"block.projectexpansion.pink_power_flower": "霞粉能量之花 [MK 5]",
+	"block.projectexpansion.purple_power_flower": "玄紫能量之花 [MK 6]",
+	"block.projectexpansion.violet_power_flower": "幽紫能量之花 [MK 7]",
+	"block.projectexpansion.blue_power_flower": "苍蓝能量之花 [MK 8]",
+	"block.projectexpansion.cyan_power_flower": "天青能量之花 [MK 9]",
+	"block.projectexpansion.green_power_flower": "翠绿能量之花 [MK 10]",
+	"block.projectexpansion.lime_power_flower": "荧绿能量之花 [MK 11]",
+	"block.projectexpansion.yellow_power_flower": "辉黄能量之花 [MK 12]",
+	"block.projectexpansion.orange_power_flower": "炽橙能量之花 [MK 13]",
+	"block.projectexpansion.white_power_flower": "皓白能量之花 [MK 14]",
+	"block.projectexpansion.fading_power_flower": "幻灭能量之花 [MK 15]",
+	"block.projectexpansion.final_power_flower": "终极能量之花 [MK 16]"
+}

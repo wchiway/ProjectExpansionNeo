@@ -1,0 +1,10 @@
+{
+	"block.projectexpansion.arcane_table": "奥术转化台",
+	"block.projectexpansion.transmutation_interface": "转化接口",
+	"block.projectexpansion.transmutation_interface.tooltip": "可配合应用能源等兼容模组访问您的转化空间。",
+	"block.projectexpansion.compact_sun": "致密太阳",
+	"block.projectexpansion.compact_sun.tooltip": "将烈日伟力凝于方寸之间。",
+	"block.projectexpansion.compact_sun.tooltip2": "置于特定方块上方或下方时，产出翻 %s 倍。",
+	"block.projectexpansion.condenser_mk3": "能量凝聚器 MK3",
+	"block.projectexpansion.condenser_mk3.tooltip": "五合一凝聚器。除底部外，每个面均为独立凝聚器，拥有专属输入、处理与锁定槽。底部作为所有面的统一输出口。"
+}

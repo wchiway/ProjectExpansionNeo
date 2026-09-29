@@ -1,0 +1,8 @@
+{
+	"command.projectexpansion.console": "控制台",
+	"command.projectexpansion.player_only": "该指令必须由玩家执行。",
+	"command.projectexpansion.reloading_emc": "正在重载 EMC！",
+	"command.projectexpansion.reload_emc.warning": "该热重载功能尚未经过极端压力测试，但通常运行良好。若出现不稳定，请完全重启存档。",
+	"command.projectexpansion.reload_emc.success": "成功重载了 %s 处 EMC 数值（耗时 %s）。若界面有残留显示，可能需要重新开启以刷新。",
+	"command.projectexpansion.reload.notice": "所有更改完成后，请重启游戏或使用 %s 重载。"
+}

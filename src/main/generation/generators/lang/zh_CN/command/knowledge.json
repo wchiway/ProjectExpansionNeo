@@ -1,0 +1,22 @@
+{
+	"command.projectexpansion.knowledge.invalid": "该物品不含 EMC 价值，无法学习。",
+	"command.projectexpansion.knowledge.clear.success": "已成功清空 %s 的转化知识。",
+	"command.projectexpansion.knowledge.clear.success_self": "已成功清空您的转化知识。",
+	"command.projectexpansion.knowledge.clear.fail": "%s 没有任何可清空的转化知识。",
+	"command.projectexpansion.knowledge.clear.fail_self": "您没有任何可清空的转化知识。",
+	"command.projectexpansion.knowledge.clear.notification": "您的转化知识已被 %s 清空。",
+	"command.projectexpansion.knowledge.learn.success": "%s 已成功习得 %s。",
+	"command.projectexpansion.knowledge.learn.success_self": "您已成功习得 %s。",
+	"command.projectexpansion.knowledge.learn.fail": "%s 已经掌握了 %s 的转化知识。",
+	"command.projectexpansion.knowledge.learn.failSelf": "您已经掌握了 %s 的转化知识。",
+	"command.projectexpansion.knowledge.learn.notification": "您从 %s 处习得了 %s。",
+	"command.projectexpansion.knowledge.unlearn.success": "%s 已成功遗忘 %s。",
+	"command.projectexpansion.knowledge.unlearn.success_self": "您已成功遗忘 %s。",
+	"command.projectexpansion.knowledge.unlearn.fail": "%s 尚未掌握 %s 的转化知识。",
+	"command.projectexpansion.knowledge.unlearn.fail_self": "您尚未掌握 %s 的转化知识。",
+	"command.projectexpansion.knowledge.unlearn.notification": "因 %s 的操作，您遗忘了 %s。",
+	"command.projectexpansion.knowledge.test.success": "%s 确实掌握了 %s 的转化知识。",
+	"command.projectexpansion.knowledge.test.success_self": "您确实掌握了 %s 的转化知识。",
+	"command.projectexpansion.knowledge.test.fail": "%s 并未掌握 %s 的转化知识。",
+	"command.projectexpansion.knowledge.test.fail_self": "您并未掌握 %s 的转化知识。"
+}

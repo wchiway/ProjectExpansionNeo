@@ -1,0 +1,23 @@
+{
+	"block.projectexpansion.collector": "能量收集器",
+	"block.projectexpansion.collector.tooltip": "暴露于光照下时生成 EMC。",
+	"block.projectexpansion.collector.emc": "最大产出 EMC：%s/秒",
+	"block.projectexpansion.collector.stack_emc": "整组最大产出 EMC：%s/秒",
+	"block.projectexpansion.collector.max_storage": "最大 EMC 储量：%s",
+	"block.projectexpansion.basic_collector": "基础能量收集器 [MK 1]",
+	"block.projectexpansion.dark_collector": "暗物质能量收集器 [MK 2]",
+	"block.projectexpansion.red_collector": "红物质能量收集器 [MK 3]",
+	"block.projectexpansion.magenta_collector": "绯红能量收集器 [MK 4]",
+	"block.projectexpansion.pink_collector": "霞粉能量收集器 [MK 5]",
+	"block.projectexpansion.purple_collector": "玄紫能量收集器 [MK 6]",
+	"block.projectexpansion.violet_collector": "幽紫能量收集器 [MK 7]",
+	"block.projectexpansion.blue_collector": "苍蓝能量收集器 [MK 8]",
+	"block.projectexpansion.cyan_collector": "天青能量收集器 [MK 9]",
+	"block.projectexpansion.green_collector": "翠绿能量收集器 [MK 10]",
+	"block.projectexpansion.lime_collector": "荧绿能量收集器 [MK 11]",
+	"block.projectexpansion.yellow_collector": "辉黄能量收集器 [MK 12]",
+	"block.projectexpansion.orange_collector": "炽橙能量收集器 [MK 13]",
+	"block.projectexpansion.white_collector": "皓白能量收集器 [MK 14]",
+	"block.projectexpansion.fading_collector": "幻灭能量收集器 [MK 15]",
+	"block.projectexpansion.final_collector": "终极能量收集器 [MK 16]"
+}

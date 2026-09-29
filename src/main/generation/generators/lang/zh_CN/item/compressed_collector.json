@@ -1,0 +1,19 @@
+{
+	"item.projectexpansion.compressed_collector.tooltip": "合成中间材料",
+	"item.projectexpansion.basic_compressed_collector": "基础压缩能量收集器 [MK 1]",
+	"item.projectexpansion.dark_compressed_collector": "暗物质压缩能量收集器 [MK 2]",
+	"item.projectexpansion.red_compressed_collector": "红物质压缩能量收集器 [MK 3]",
+	"item.projectexpansion.magenta_compressed_collector": "绯红压缩能量收集器 [MK 4]",
+	"item.projectexpansion.pink_compressed_collector": "霞粉压缩能量收集器 [MK 5]",
+	"item.projectexpansion.purple_compressed_collector": "玄紫压缩能量收集器 [MK 6]",
+	"item.projectexpansion.violet_compressed_collector": "幽紫压缩能量收集器 [MK 7]",
+	"item.projectexpansion.blue_compressed_collector": "苍蓝压缩能量收集器 [MK 8]",
+	"item.projectexpansion.cyan_compressed_collector": "天青压缩能量收集器 [MK 9]",
+	"item.projectexpansion.green_compressed_collector": "翠绿压缩能量收集器 [MK 10]",
+	"item.projectexpansion.lime_compressed_collector": "荧绿压缩能量收集器 [MK 11]",
+	"item.projectexpansion.yellow_compressed_collector": "辉黄压缩能量收集器 [MK 12]",
+	"item.projectexpansion.orange_compressed_collector": "炽橙压缩能量收集器 [MK 13]",
+	"item.projectexpansion.white_compressed_collector": "皓白压缩能量收集器 [MK 14]",
+	"item.projectexpansion.fading_compressed_collector": "幻灭压缩能量收集器 [MK 15]",
+	"item.projectexpansion.final_compressed_collector": "终极压缩能量收集器 [MK 16]"
+}

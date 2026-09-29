@@ -1,0 +1,12 @@
+{
+	"item.projectexpansion.matter_upgrader.tooltip": "右键可原地升级收集器、能量之花与反物质继电器。",
+	"item.projectexpansion.matter_upgrader.tooltip2": "必须已习得下一阶配方，且账户内拥有足够的 EMC 差价方可升级。",
+	"item.projectexpansion.matter_upgrader.tooltip_creative": "在创造模式下不受上述限制约束。",
+	"item.projectexpansion.matter_upgrader": "物质升级器",
+	"item.projectexpansion.matter_upgrader.not_owner": "该方块不属于您。",
+	"item.projectexpansion.matter_upgrader.max_upgrade": "该方块已达到最高等级。",
+	"item.projectexpansion.matter_upgrader.not_learned": "升级前必须先习得“%s”。",
+	"item.projectexpansion.matter_upgrader.not_enough_emc": "EMC 不足，升级需要 %s。",
+	"item.projectexpansion.matter_upgrader.done": "升级成功，已扣除 %s EMC。",
+	"item.projectexpansion.matter_upgrader.done_creative": "升级成功，创造模式免除 EMC 扣费。"
+}
