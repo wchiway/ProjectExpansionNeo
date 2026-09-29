@@ -7,10 +7,11 @@
         "1.21.1-1.0.3": "https://github.com/wchiway/ProjectExpansionNeo/releases/tag/1.21.1-1.0.3",
         "1.21.1-1.0.4": "https://github.com/wchiway/ProjectExpansionNeo/releases/tag/1.21.1-1.0.4",
         "1.21.1-1.0.5": "https://github.com/wchiway/ProjectExpansionNeo/releases/tag/1.21.1-1.0.5",
-        "1.21.1-1.0.6": "https://github.com/wchiway/ProjectExpansionNeo/releases/tag/1.21.1-1.0.6"
+        "1.21.1-1.0.6": "https://github.com/wchiway/ProjectExpansionNeo/releases/tag/1.21.1-1.0.6",
+        "1.21.1-1.1.0": "https://github.com/wchiway/ProjectExpansionNeo/releases/tag/1.21.1-1.1.0"
     },
     "promos": {
-        "1.21.1-latest": "1.21.1-1.0.6",
-        "1.21.1-recommended": "1.21.1-1.0.6"
+        "1.21.1-latest": "1.21.1-1.1.0",
+        "1.21.1-recommended": "1.21.1-1.1.0"
     }
 }

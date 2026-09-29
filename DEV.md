@@ -43,7 +43,7 @@ MC_Mod/
 ```
 
 本指南中的命令均从项目根目录执行；Windows 将 `./gradlew` 替换为 `gradlew.bat`。
-可安装的产物位于 `build/libs/ProjectExpansionNeo-1.21.1-1.0.6.jar`，
+可安装的产物位于 `build/libs/ProjectExpansionNeo-1.21.1-1.1.0.jar`，
 `-sources.jar` 为源码包。文件名中的版本由 `gradle.properties` 决定。
 
 两个 Wrapper 启动脚本都将 `GRADLE_USER_HOME` 固定为项目内的 **`.gradle_home/`**。
