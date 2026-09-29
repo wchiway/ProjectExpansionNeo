@@ -2,7 +2,9 @@ package cool.furry.mc.neoforge.projectexpansion.test;
 
 import cool.furry.mc.neoforge.projectexpansion.block.entity.BlockEntityEMCLink;
 import cool.furry.mc.neoforge.projectexpansion.config.Config;
+import cool.furry.mc.neoforge.projectexpansion.gui.container.ContainerArcaneTransmutationTablet;
 import cool.furry.mc.neoforge.projectexpansion.registries.DataComponentTypes;
+import cool.furry.mc.neoforge.projectexpansion.registries.MenuTypes;
 import cool.furry.mc.neoforge.projectexpansion.util.Matter;
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -20,6 +22,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Blocks;
@@ -27,6 +30,46 @@ import net.minecraft.world.level.block.entity.AbstractFurnaceBlockEntity;
 import net.minecraft.world.level.material.Fluids;
 
 public class ExpansionGameTests implements FabricGameTest {
+    @GameTest(template = EMPTY_STRUCTURE)
+    public void arcaneTabletOpensInBothHands(GameTestHelper test) {
+        var player = test.makeMockServerPlayerInLevel();
+        try {
+            var tablet = cool.furry.mc.neoforge.projectexpansion.registries.Items.ARCANE_TRANSMUTATION_TABLET.get();
+            player.getInventory().selected = 4;
+            for (InteractionHand hand : InteractionHand.values()) {
+                player.setItemInHand(hand, new ItemStack(tablet));
+                var result = tablet.use(test.getLevel(), player, hand);
+                test.assertTrue(result.getResult().consumesAction(), "Using the tablet succeeds in " + hand);
+                test.assertTrue(player.containerMenu instanceof ContainerArcaneTransmutationTablet, "Using the tablet opens its menu in " + hand);
+                var menu = (ContainerArcaneTransmutationTablet) player.containerMenu;
+                test.assertTrue(menu.getType() == MenuTypes.ARCANE_TRANSMUTATION_TABLET.get(), "Opened menu uses its registered type");
+                test.assertTrue(menu.hand == hand && menu.stillValid(player), "Opened menu remains valid in " + hand);
+                test.assertTrue(menu.slots.size() == 73, "Opened menu includes transmutation, player and crafting slots");
+                player.closeContainer();
+                player.setItemInHand(hand, ItemStack.EMPTY);
+            }
+            test.succeed();
+        } finally {
+            player.closeContainer();
+            test.getLevel().getServer().getPlayerList().remove(player);
+        }
+    }
+
+    @GameTest(template = EMPTY_STRUCTURE)
+    public void arcaneTabletOpensWithoutHand(GameTestHelper test) {
+        var player = test.makeMockServerPlayerInLevel();
+        try {
+            cool.furry.mc.neoforge.projectexpansion.registries.Items.ARCANE_TRANSMUTATION_TABLET.get().openContainer(player);
+            test.assertTrue(player.containerMenu instanceof ContainerArcaneTransmutationTablet, "The accessory opening path creates the arcane menu");
+            var menu = (ContainerArcaneTransmutationTablet) player.containerMenu;
+            test.assertTrue(menu.hand == null && menu.stillValid(player), "Accessory menu does not require a held tablet");
+            test.succeed();
+        } finally {
+            player.closeContainer();
+            test.getLevel().getServer().getPlayerList().remove(player);
+        }
+    }
+
     @GameTest(template = EMPTY_STRUCTURE)
     public void collectorInventoryTransactions(GameTestHelper test) {
         var player = test.makeMockServerPlayerInLevel();

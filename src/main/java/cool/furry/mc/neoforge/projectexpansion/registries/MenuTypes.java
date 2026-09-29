@@ -5,6 +5,7 @@ import cool.furry.mc.neoforge.projectexpansion.block.entity.BlockEntityCollector
 import cool.furry.mc.neoforge.projectexpansion.block.entity.BlockEntityCondenserMK3;
 import cool.furry.mc.neoforge.projectexpansion.gui.container.*;
 import moze_intel.projecte.gameObjs.registration.impl.ContainerTypeDeferredRegister;
+import moze_intel.projecte.gameObjs.registration.impl.ContainerTypeRegistryObject;
 import moze_intel.projecte.utils.WorldHelper;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
@@ -29,9 +30,9 @@ public class MenuTypes {
     public static final PEDeferredHolder<MenuType<?>, MenuType<ContainerCollector>> COLLECTOR_TIER_3 = registerBlockEntity("collector_tier_3", BlockEntityCollector.class, ContainerCollector.Tier3::new);
     public static final PEDeferredHolder<MenuType<?>, MenuType<ContainerCondenserMK3Input>> CONDENSER_MK3_INPUT = registerBlockEntity("condenser_mk3_input", BlockEntityCondenserMK3.class, ContainerCondenserMK3Input::new);
     public static final PEDeferredHolder<MenuType<?>, MenuType<ContainerCondenserMK3Output>> CONDENSER_MK3_OUTPUT = registerBlockEntity("condenser_mk3_output", BlockEntityCondenserMK3.class, ContainerCondenserMK3Output::new);
-    public static final PEDeferredHolder<MenuType<?>, MenuType<ContainerArcaneTransmutationTablet>> ARCANE_TRANSMUTATION_TABLET = register("arcane_transmutation_tablet", ContainerArcaneTransmutationTablet::fromNetwork);
+    public static final ContainerTypeRegistryObject<ContainerArcaneTransmutationTablet> ARCANE_TRANSMUTATION_TABLET = register("arcane_transmutation_tablet", ContainerArcaneTransmutationTablet::fromNetwork);
 
-    public static <CONTAINER extends AbstractContainerMenu> PEDeferredHolder<MenuType<?>, MenuType<CONTAINER>> register(String name, IContainerFactory<CONTAINER> factory) {
+    public static <CONTAINER extends AbstractContainerMenu> ContainerTypeRegistryObject<CONTAINER> register(String name, IContainerFactory<CONTAINER> factory) {
         return Registry.register(name, factory);
     }
 

@@ -20,7 +20,6 @@ import moze_intel.projecte.gameObjs.container.PEHandContainer;
 import moze_intel.projecte.gameObjs.container.inventory.TransmutationInventory;
 import moze_intel.projecte.gameObjs.container.slots.transmutation.*;
 import moze_intel.projecte.gameObjs.items.Tome;
-import moze_intel.projecte.gameObjs.registration.impl.ContainerTypeRegistryObject;
 import moze_intel.projecte.network.packets.to_server.SearchUpdatePKT;
 import moze_intel.projecte.utils.ItemHelper;
 import net.minecraft.core.RegistryAccess;
@@ -85,7 +84,7 @@ public class ContainerArcaneTransmutationTablet extends PEHandContainer {
     }
 
     public ContainerArcaneTransmutationTablet(int windowId, Inventory playerInv, IKnowledgeProvider provider, @Nullable InteractionHand hand, int selected) {
-        super(new ContainerTypeRegistryObject<>(MenuTypes.ARCANE_TRANSMUTATION_TABLET.getKey()), windowId, playerInv, hand, selected);
+        super(MenuTypes.ARCANE_TRANSMUTATION_TABLET, windowId, playerInv, hand, selected);
         this.player = playerInv.player;
         this.provider = provider;
         this.transmutationInventory = new TransmutationInventory(playerInv.player);
