@@ -1,4 +1,4 @@
-# ProjectExpansionNeo 开发指南
+# 等价扩展:Neo 开发指南
 
 本文件介绍构建、开发与验证流程。模组功能和安装说明见 [README](README.md)。
 
@@ -119,7 +119,7 @@ Java 包根目录为 `src/main/java/cool/furry/mc/neoforge/projectexpansion/`。
 
 ## 维护约定
 
-- 对外名称和发布 JAR 名称使用 `ProjectExpansionNeo`；模组 ID 保持 `projectexpansion`，
+- 中文名使用“等价扩展:Neo”，英文名和发布 JAR 名称使用 `ProjectExpansionNeo`；模组 ID 保持 `projectexpansion`，
   前置 ProjectEF Neo 的模组 ID 为 `projecte`。
 - 修改注册 ID、数据组件、持久化数据或网络格式时，同时检查写入和读取位置。
 - Fabric Transfer API 的模拟与嵌套事务必须能回滚；EMC 保留 `BigInteger` 精度，
