@@ -9,7 +9,7 @@ import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.neoforged.neoforge.network.handling.IPayloadContext;
+import moze_intel.projecte.network.PEPacketContext;
 
 import java.util.List;
 
@@ -22,7 +22,7 @@ public record PacketArcaneTransmutationTabletRecipeTransfer(List<List<ItemStack>
     );
 
     @Override
-    public void handle(IPayloadContext context) {
+    public void handle(PEPacketContext context) {
         Player player = context.player();
         if (player.containerMenu instanceof ContainerArcaneTransmutationTablet container) {
             container.onRecipeTransfer(recipe, transferAll);

@@ -10,7 +10,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
+import cool.furry.mc.neoforge.projectexpansion.platform.CapabilityRegistrar;
 
 import java.math.BigInteger;
 
@@ -23,7 +23,7 @@ public class BlockEntityRelay extends BlockEntityEMC implements IHasMatter, IRel
         super(BlockEntityTypes.RELAY.get(), pos, state);
     }
 
-    public static void registerCapabilities(RegisterCapabilitiesEvent event) {
+    public static void registerCapabilities(CapabilityRegistrar event) {
         BlockEntityEMC.registerCapabilities(event, BlockEntityTypes.RELAY.get());
     }
 

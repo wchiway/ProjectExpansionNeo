@@ -4,11 +4,11 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
-import net.neoforged.fml.loading.FMLEnvironment;
+import net.fabricmc.loader.api.FabricLoader;
 
 public class CommandDevTest {
     public static LiteralArgumentBuilder<CommandSourceStack> getArguments() {
-        return Commands.literal("devtest").requires(ignore -> !FMLEnvironment.production)
+        return Commands.literal("devtest").requires(ignore -> FabricLoader.getInstance().isDevelopmentEnvironment())
                 .executes(CommandDevTest::handle);
     }
 

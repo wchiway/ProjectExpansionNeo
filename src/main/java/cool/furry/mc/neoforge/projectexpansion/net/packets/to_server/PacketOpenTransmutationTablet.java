@@ -13,8 +13,8 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.neoforged.neoforge.items.IItemHandlerModifiable;
-import net.neoforged.neoforge.network.handling.IPayloadContext;
+import moze_intel.projecte.api.item_handlers.IItemHandlerModifiable;
+import moze_intel.projecte.network.PEPacketContext;
 
 import java.util.Optional;
 
@@ -24,8 +24,8 @@ public class PacketOpenTransmutationTablet implements IPacket {
     public static final StreamCodec<FriendlyByteBuf, PacketOpenTransmutationTablet> STREAM_CODEC = StreamCodec.unit(INSTANCE);
 
     @Override
-    public void handle(IPayloadContext context) {
-        context.enqueueWork(() -> {
+    public void handle(PEPacketContext context) {
+        cool.furry.mc.neoforge.projectexpansion.net.PacketWork.run(() -> {
             Player player = context.player();
             if (!(player instanceof ServerPlayer)) return;
             Optional<IItemHandlerModifiable> curiosInv = CuriosIntegration.getCuriosInventory(player);

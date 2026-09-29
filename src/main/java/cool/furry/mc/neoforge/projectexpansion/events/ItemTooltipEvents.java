@@ -19,21 +19,16 @@ import net.minecraft.client.resources.language.I18n;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.bus.api.EventPriority;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.event.entity.player.ItemTooltipEvent;
+import net.fabricmc.api.EnvType;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
-@EventBusSubscriber(modid = Main.MOD_ID, bus = EventBusSubscriber.Bus.GAME, value = Dist.CLIENT)
 public class ItemTooltipEvents {
     // we need to be lower priority than ProjectE's listener so the EMC component is present when we get the event
-    @SubscribeEvent(priority = EventPriority.LOW)
-    public static void itemTooltipEvent(ItemTooltipEvent event) {
-        ItemStack stack = event.getItemStack();
-        if (stack.isEmpty()|| event.getEntity() == null || event.getEntity().isDeadOrDying()) {
+
+    public static void itemTooltipEvent(ItemStack stack, net.minecraft.world.item.Item.TooltipContext context, net.minecraft.world.item.TooltipFlag flag, java.util.List<Component> lines) {
+        var player = net.minecraft.client.Minecraft.getInstance().player;
+        if (stack.isEmpty()|| player == null || player.isDeadOrDying()) {
             return;
         }
 
@@ -43,7 +38,7 @@ public class ItemTooltipEvents {
                 break learnedTooltip;
             }
 
-            IKnowledgeProvider provider = Util.getKnowledgeProvider(event.getEntity());
+            IKnowledgeProvider provider = Util.getKnowledgeProvider(player);
             if (provider == null) {
                 break learnedTooltip;
             }
@@ -52,39 +47,39 @@ public class ItemTooltipEvents {
             long value = IEMCProxy.INSTANCE.getValue(stack);
             AtomicInteger index = new AtomicInteger(-1);
             AtomicInteger peTransmutableIndex = new AtomicInteger(-1);
-            for (Component c : event.getToolTip()) {
+            for (Component c : lines) {
                 if (c.getString().equals(EMCHelper.getEmcTextComponent(value, 1).getString())) {
-                    index.set(event.getToolTip().indexOf(c));
+                    index.set(lines.indexOf(c));
                     continue;
                 }
 
                 if (c.getString().equals(I18n.get(PELang.EMC_HAS_KNOWLEDGE.getTranslationKey()))) {
-                    peTransmutableIndex.set(event.getToolTip().indexOf(c));
+                    peTransmutableIndex.set(lines.indexOf(c));
                 }
             }
 
             // attempt to add a minimal notice
             if (index.get() != -1) {
-                event.getToolTip().set(index.get(), event.getToolTip().get(index.get()).copy().append(Component.literal(" (").setStyle(ColorStyle.WHITE)).append(hasKnowledge ?
+                lines.set(index.get(), lines.get(index.get()).copy().append(Component.literal(" (").setStyle(ColorStyle.WHITE)).append(hasKnowledge ?
                         Component.literal("✓").setStyle(ColorStyle.GREEN) : Component.literal("✗").setStyle(ColorStyle.RED)
                 ).append(Component.literal(")").setStyle(ColorStyle.WHITE)));
             } else {
                 // if we can't find an existing EMC element, add a new more detailed element
-                event.getToolTip().add(hasKnowledge ?
+                lines.add(hasKnowledge ?
                     Lang.LEARNED.translateColored(ChatFormatting.GREEN) : Lang.NOT_LEARNED.translateColored(ChatFormatting.RED)
                 );
             }
 
 
             if (peTransmutableIndex.get() != -1) {
-                event.getToolTip().remove(peTransmutableIndex.get());
+                lines.remove(peTransmutableIndex.get());
             }
         }
 
-        boolean hasEnch = EnchantmentHelper.getTagEnchantmentLevel(event.getEntity().registryAccess().holderOrThrow(Enchantments.ALCHEMICAL_COLLECTION), stack) > 0;
+        boolean hasEnch = EnchantmentHelper.getItemEnchantmentLevel(player.registryAccess().lookupOrThrow(net.minecraft.core.registries.Registries.ENCHANTMENT).getOrThrow(Enchantments.ALCHEMICAL_COLLECTION), stack) > 0;
         if(hasEnch) {
-            boolean enabled = stack.getOrDefault(PEDataComponentTypes.ACTIVE, true);
-            event.getToolTip().add(Lang.ALCHEMICAL_COLLECTION.translate(enabled ? Lang.ENABLED.translateColored(ChatFormatting.GREEN) : Lang.DISABLED.translateColored(ChatFormatting.RED)));
+            boolean enabled = stack.getOrDefault(PEDataComponentTypes.ACTIVE.get(), true);
+            lines.add(Lang.ALCHEMICAL_COLLECTION.translate(enabled ? Lang.ENABLED.translateColored(ChatFormatting.GREEN) : Lang.DISABLED.translateColored(ChatFormatting.RED)));
         }
 
     }

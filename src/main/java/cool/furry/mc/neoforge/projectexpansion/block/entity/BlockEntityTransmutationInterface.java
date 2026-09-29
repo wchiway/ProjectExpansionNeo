@@ -14,22 +14,30 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import net.neoforged.neoforge.capabilities.Capabilities;
-import net.neoforged.neoforge.capabilities.ICapabilityProvider;
-import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
-import net.neoforged.neoforge.items.IItemHandler;
+import cool.furry.mc.neoforge.projectexpansion.platform.InventoryCapabilities;
+import java.util.function.BiFunction;
+import cool.furry.mc.neoforge.projectexpansion.platform.CapabilityRegistrar;
+import moze_intel.projecte.api.item_handlers.IItemHandler;
 import org.jetbrains.annotations.Nullable;
 
 import java.math.BigInteger;
 
 @SuppressWarnings("unused")
 public class BlockEntityTransmutationInterface extends BlockEntityNBTFilterable {
-    private static final ICapabilityProvider<BlockEntityTransmutationInterface, @Nullable Direction, IItemHandler> ITEM_HANDLER_CAPABILITY = (be, side) -> be.getItemHandler();
+    private static final BiFunction<BlockEntityTransmutationInterface, @Nullable Direction, IItemHandler> ITEM_HANDLER_CAPABILITY = (be, side) -> be.getItemHandler();
 
     private ItemInfo[] info;
+    private final cool.furry.mc.neoforge.projectexpansion.platform.VirtualEmcStorage fabricItems =
+        new cool.furry.mc.neoforge.projectexpansion.platform.VirtualEmcStorage(() -> owner,
+            () -> java.util.Arrays.stream(fetchKnowledge()).map(ItemInfo::createStack).toList(),
+            stack -> IEMCProxy.INSTANCE.hasValue(stack) && (!getFilterStatus() || IEMCProxy.INSTANCE.getPersistentInfo(ItemInfo.fromStack(stack)).equals(ItemInfo.fromStack(stack))),
+            () -> Integer.MAX_VALUE, () -> Math.max(1, Config.server.transmutationInterfaceItemCount.get()),
+            (amount, transaction) -> {}, (amount, transaction) -> {});
+    public net.fabricmc.fabric.api.transfer.v1.storage.Storage<net.fabricmc.fabric.api.transfer.v1.item.ItemVariant> fabricItems() { return fabricItems; }
 
-    public static void registerCapabilities(RegisterCapabilitiesEvent event) {
-        event.registerBlockEntity(Capabilities.ItemHandler.BLOCK, BlockEntityTypes.TRANSMUTATION_INTERFACE.get(), ITEM_HANDLER_CAPABILITY);
+
+    public static void registerCapabilities(CapabilityRegistrar event) {
+        event.registerBlockEntity(InventoryCapabilities.ItemHandler.BLOCK, BlockEntityTypes.TRANSMUTATION_INTERFACE.get(), ITEM_HANDLER_CAPABILITY);
     }
 
     public BlockEntityTransmutationInterface(BlockPos pos, BlockState state) {
@@ -157,6 +165,6 @@ public class BlockEntityTransmutationInterface extends BlockEntityNBTFilterable 
     }
 
     ItemHandler getItemHandlerCapability() {
-        return (ItemHandler) WorldHelper.getCapability(level, Capabilities.ItemHandler.BLOCK, worldPosition, getBlockState(), this, null);
+        return getItemHandler();
     }
 }

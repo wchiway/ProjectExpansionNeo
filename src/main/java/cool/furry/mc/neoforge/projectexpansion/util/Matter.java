@@ -17,7 +17,7 @@ import net.minecraft.world.item.*;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.material.MapColor;
-import net.neoforged.neoforge.registries.DeferredHolder;
+import moze_intel.projecte.gameObjs.registration.PEDeferredHolder;
 
 import javax.annotation.Nullable;
 import java.math.BigDecimal;
@@ -91,29 +91,29 @@ public enum Matter implements StringRepresentable, IMatterType {
     @Nullable
     public final Supplier<Block> existingBlock;
     @Nullable
-    private DeferredHolder<Item, Item> itemMatter = null;
+    private PEDeferredHolder<Item, Item> itemMatter = null;
     @Nullable
-    private DeferredHolder<Block, BlockPowerFlower> powerFlower = null;
+    private PEDeferredHolder<Block, BlockPowerFlower> powerFlower = null;
     @Nullable
-    private DeferredHolder<Item, BlockItem> itemPowerFlower = null;
+    private PEDeferredHolder<Item, BlockItem> itemPowerFlower = null;
     @Nullable
-    private DeferredHolder<Block, BlockCollector> collector = null;
+    private PEDeferredHolder<Block, BlockCollector> collector = null;
     @Nullable
-    private DeferredHolder<Item, BlockItem> itemCollector = null;
+    private PEDeferredHolder<Item, BlockItem> itemCollector = null;
     @Nullable
-    private DeferredHolder<Item, ItemCompressedCollector> itemCompressedCollector = null;
+    private PEDeferredHolder<Item, ItemCompressedCollector> itemCompressedCollector = null;
     @Nullable
-    private DeferredHolder<Block, BlockRelay> relay = null;
+    private PEDeferredHolder<Block, BlockRelay> relay = null;
     @Nullable
-    private DeferredHolder<Item, BlockItem> itemRelay = null;
+    private PEDeferredHolder<Item, BlockItem> itemRelay = null;
     @Nullable
-    private DeferredHolder<Block, BlockEMCLink> emcLink = null;
+    private PEDeferredHolder<Block, BlockEMCLink> emcLink = null;
     @Nullable
-    private DeferredHolder<Item, BlockItem> itemEMCLink = null;
+    private PEDeferredHolder<Item, BlockItem> itemEMCLink = null;
     @Nullable
-    private DeferredHolder<Item, BlockItem> itemMatterBlock = null;
+    private PEDeferredHolder<Item, BlockItem> itemMatterBlock = null;
     @Nullable
-    private DeferredHolder<Block, BlockMatter> blockMatterBlock = null;
+    private PEDeferredHolder<Block, BlockMatter> blockMatterBlock = null;
     private final DyeColor color;
     Matter(int fluidEfficiency, float attackDamage, float efficiency, float chargeModifier, TagKey<Block> incorrectBlockForDrops, @Nullable Supplier<MapColor> mapColor, @Nullable Supplier<Item> existingItem, @Nullable Supplier<Block> existingBlock, DyeColor color) {
         boolean isFinal = name().equals("FINAL"); // we can't access the FINAL member because we're in the constructor

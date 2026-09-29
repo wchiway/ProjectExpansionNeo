@@ -5,17 +5,11 @@ import com.mojang.brigadier.tree.LiteralCommandNode;
 import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.event.RegisterCommandsEvent;
 
-@EventBusSubscriber(bus = EventBusSubscriber.Bus.GAME)
 public class CommandRegistry {
     public static final String COMMAND_BASE = "px";
-    @SubscribeEvent
-    public static void onRegisterCommandsEvent(RegisterCommandsEvent event) {
-        CommandDispatcher<CommandSourceStack> dispatcher = event.getDispatcher();
-        CommandBuildContext buildContext = event.getBuildContext();
+
+    public static void register(CommandDispatcher<CommandSourceStack> dispatcher, CommandBuildContext buildContext) {
 
         LiteralCommandNode<CommandSourceStack> baseNode = dispatcher.register(Commands.literal(COMMAND_BASE)
                 .then(CommandBook.getArguments())

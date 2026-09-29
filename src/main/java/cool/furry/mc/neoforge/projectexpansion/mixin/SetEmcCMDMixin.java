@@ -17,7 +17,7 @@ import java.util.function.Supplier;
 public class SetEmcCMDMixin {
     @ModifyArg(
         method = "setEmc(Lcom/mojang/brigadier/context/CommandContext;Lmoze_intel/projecte/api/nss/NSSItem;J)I",
-        at = @At(value = "INVOKE", target = "Lnet/minecraft/commands/CommandSourceStack;sendSuccess(Ljava/util/function/Supplier;Z)V", ordinal = 1),
+        at = @At(value = "INVOKE", target = "Lnet/minecraft/commands/CommandSourceStack;sendSuccess(Ljava/util/function/Supplier;Z)V", ordinal = 1, remap = true),
         index = 0,
         remap = false
     )

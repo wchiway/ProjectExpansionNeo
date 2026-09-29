@@ -18,7 +18,7 @@ import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.CraftingRecipe;
 import net.minecraft.world.item.crafting.RecipeHolder;
-import net.neoforged.neoforge.network.PacketDistributor;
+import moze_intel.projecte.network.PENetwork;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -86,7 +86,7 @@ public class ArcaneCraftingTransferHandler implements IRecipeTransferHandler<Con
                 }
             }
 
-            PacketDistributor.sendToServer(new PacketArcaneTransmutationTabletRecipeTransfer(itemStack, transferAll));
+            PENetwork.sendToServer(new PacketArcaneTransmutationTabletRecipeTransfer(itemStack, transferAll));
             return null;
         } else {
             List<Integer> missing = this.findMissingSlots(iRecipeSlotsView, container, player);

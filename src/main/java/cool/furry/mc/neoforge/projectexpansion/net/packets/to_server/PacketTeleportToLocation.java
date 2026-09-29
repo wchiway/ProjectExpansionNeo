@@ -21,7 +21,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.neoforged.neoforge.network.handling.IPayloadContext;
+import moze_intel.projecte.network.PEPacketContext;
 
 import java.math.BigInteger;
 
@@ -35,12 +35,12 @@ public record PacketTeleportToLocation(String name, Player player, InteractionHa
     );
 
     @Override
-    public void handle(IPayloadContext context) {
+    public void handle(PEPacketContext context) {
         ItemStack stack = player.getItemInHand(hand);
         if(stack.getItem() instanceof ItemAlchemicalBook book) {
             try {
                 IAlchemicalBookLocationsProvider provider = CapabilityAlchemicalBookLocations.from(stack);
-                IKnowledgeProvider knowledgeProvider = player.getCapability(PECapabilities.KNOWLEDGE_CAPABILITY);
+                IKnowledgeProvider knowledgeProvider = PECapabilities.KNOWLEDGE_CAPABILITY.find(player);
                 if (knowledgeProvider == null) throw new IllegalStateException("Player does not have knowledge capability");
                 BigInteger emc = knowledgeProvider.getEmc();
                 CapabilityAlchemicalBookLocations.TeleportLocation location = provider.getLocationOrThrow(name);

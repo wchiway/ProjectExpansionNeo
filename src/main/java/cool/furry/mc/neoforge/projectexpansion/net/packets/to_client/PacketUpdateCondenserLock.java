@@ -8,7 +8,7 @@ import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.neoforged.neoforge.network.handling.IPayloadContext;
+import moze_intel.projecte.network.PEPacketContext;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Optional;
@@ -27,7 +27,7 @@ public record PacketUpdateCondenserLock(short windowId, @Nullable ItemInfo lockI
     }
 
     @Override
-    public void handle(IPayloadContext context) {
+    public void handle(PEPacketContext context) {
         if (context.player().containerMenu instanceof ContainerCondenserMK3Input container && container.containerId == windowId) {
             container.updateLockInfo(lockInfo);
         }

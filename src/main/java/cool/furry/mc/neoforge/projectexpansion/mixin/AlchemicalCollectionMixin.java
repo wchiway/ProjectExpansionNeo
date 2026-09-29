@@ -19,8 +19,8 @@ import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import net.neoforged.neoforge.capabilities.Capabilities;
-import net.neoforged.neoforge.items.IItemHandler;
+import cool.furry.mc.neoforge.projectexpansion.platform.InventoryCapabilities;
+import moze_intel.projecte.api.item_handlers.IItemHandler;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -34,7 +34,7 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 // This mixin enables converting mined items with EMC into EMC and knowledge
-@Mixin(value = Block.class, remap = false)
+@Mixin(value = Block.class)
 public abstract class AlchemicalCollectionMixin {
     @Inject(at = @At("RETURN"), method = "getDrops(Lnet/minecraft/world/level/block/state/BlockState;Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/block/entity/BlockEntity;Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/item/ItemStack;)Ljava/util/List;", cancellable = true)
     private static void getDrops(BlockState state, ServerLevel level, BlockPos pos, BlockEntity blockEntity, Entity entity, ItemStack stack, CallbackInfoReturnable<List<ItemStack>> cir) {
@@ -42,9 +42,9 @@ public abstract class AlchemicalCollectionMixin {
         @Nullable IKnowledgeProvider provider = Util.getKnowledgeProvider(player);
         if (provider == null) return;
         IEMCProxy proxy = IEMCProxy.INSTANCE;
-        boolean hasEnch = EnchantmentHelper.getTagEnchantmentLevel(level.registryAccess().holderOrThrow(Enchantments.ALCHEMICAL_COLLECTION), stack) > 0;
-        if (!state.canHarvestBlock(level, pos, player) || !hasEnch) return;
-        boolean enabled = stack.getOrDefault(PEDataComponentTypes.ACTIVE, false);
+        boolean hasEnch = EnchantmentHelper.getItemEnchantmentLevel(level.registryAccess().lookupOrThrow(net.minecraft.core.registries.Registries.ENCHANTMENT).getOrThrow(Enchantments.ALCHEMICAL_COLLECTION), stack) > 0;
+        if (!player.hasCorrectToolForDrops(state) || !hasEnch) return;
+        boolean enabled = stack.getOrDefault(PEDataComponentTypes.ACTIVE.get(), false);
         if (!enabled) {
             return;
         }
@@ -64,7 +64,7 @@ public abstract class AlchemicalCollectionMixin {
             .collect(Collectors.toList());
 
         if (newDrops.size() < initialDrops.size() || addEMC.get().compareTo(BigInteger.ZERO) > 0) {
-            @Nullable IItemHandler handler = WorldHelper.getCapability(level, Capabilities.ItemHandler.BLOCK, pos, state, blockEntity, null);
+            @Nullable IItemHandler handler = WorldHelper.getItemHandler(level, pos, state, blockEntity, null);
             if (handler != null) {
                 for (int i = 0; i < handler.getSlots(); i++) {
                     ItemStack slotStack = handler.getStackInSlot(i);

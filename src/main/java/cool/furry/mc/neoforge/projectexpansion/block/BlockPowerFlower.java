@@ -34,8 +34,8 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 
 import javax.annotation.Nullable;
 import java.math.BigInteger;
@@ -54,7 +54,7 @@ public class BlockPowerFlower extends Block implements IHasMatter, EntityBlock, 
     private final Matter matter;
 
     public BlockPowerFlower(BlockBehaviour.Properties properties, Matter matter) {
-        super(properties);
+        super(properties.pushReaction(PushReaction.BLOCK).mapColor(matter.mapColor == null ? MapColor.NONE : matter.mapColor.get()));
         this.matter = matter;
     }
 
@@ -100,7 +100,7 @@ public class BlockPowerFlower extends Block implements IHasMatter, EntityBlock, 
         return SHAPE;
     }
 
-    @OnlyIn(Dist.CLIENT)
+    @Environment(EnvType.CLIENT)
     @Override
     public void appendHoverText(ItemStack stack, Item.TooltipContext context, List<Component> list, TooltipFlag tooltipFlag) {
         super.appendHoverText(stack, context, list, tooltipFlag);
@@ -133,16 +133,6 @@ public class BlockPowerFlower extends Block implements IHasMatter, EntityBlock, 
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
         if (type == BlockEntityTypes.POWER_FLOWER.get() && !level.isClientSide) return BlockEntityPowerFlower::tickServer;
         return null;
-    }
-
-    @Override
-    public PushReaction getPistonPushReaction(BlockState state) {
-        return PushReaction.BLOCK;
-    }
-
-    @Override
-    public MapColor getMapColor(BlockState state, BlockGetter level, BlockPos pos, MapColor defaultColor) {
-        return matter.mapColor == null ? super.getMapColor(state, level, pos, defaultColor) : matter.mapColor.get();
     }
 
     @Override

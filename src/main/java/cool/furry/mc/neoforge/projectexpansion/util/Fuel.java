@@ -8,7 +8,7 @@ import moze_intel.projecte.gameObjs.registries.PEItems;
 import net.minecraft.world.item.*;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.block.Block;
-import net.neoforged.neoforge.registries.DeferredHolder;
+import moze_intel.projecte.gameObjs.registration.PEDeferredHolder;
 
 import javax.annotation.Nullable;
 import java.math.BigInteger;
@@ -48,11 +48,11 @@ public enum Fuel {
     @Nullable
     public final Supplier<Item> existingItem;
     @Nullable
-    private DeferredHolder<Item, Item> item = null;
+    private PEDeferredHolder<Item, Item> item = null;
     @Nullable
-    private DeferredHolder<Block, Block> block = null;
+    private PEDeferredHolder<Block, Block> block = null;
     @Nullable
-    private DeferredHolder<Item, BlockItem> blockItem = null;
+    private PEDeferredHolder<Item, BlockItem> blockItem = null;
     Fuel(@Nullable Supplier<Item> existingItem) {
         this.name = name().toLowerCase(Locale.US);
         this.existingItem = existingItem;
@@ -68,7 +68,7 @@ public enum Fuel {
 
     public int getBurnTime() { return getBurnTime(null); }
     public int getBurnTime(@Nullable RecipeType<?> type) {
-        return item == null ? -1 : new ItemStack(PEItems.AETERNALIS_FUEL.get()).getBurnTime(type);
+        return item == null ? -1 : java.util.Objects.requireNonNullElse(net.fabricmc.fabric.api.registry.FuelRegistry.INSTANCE.get(PEItems.AETERNALIS_FUEL.get()), 0);
     }
 
     public long getCollectorEMCLimit() {

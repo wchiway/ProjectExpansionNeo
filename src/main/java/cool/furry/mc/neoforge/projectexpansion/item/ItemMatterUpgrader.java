@@ -20,8 +20,8 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 
 import javax.annotation.Nullable;
 import java.math.BigInteger;
@@ -34,7 +34,7 @@ public class ItemMatterUpgrader extends Item {
         super(new Properties());
     }
 
-    @OnlyIn(Dist.CLIENT)
+    @Environment(EnvType.CLIENT)
     @Override
     public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> list, TooltipFlag flag) {
         super.appendHoverText(stack, context, list, flag);
@@ -43,7 +43,6 @@ public class ItemMatterUpgrader extends Item {
         list.add(Lang.Items.MATTER_UPGRADER_TOOLTIP_CREATIVE.translateColored(ChatFormatting.RED));
     }
 
-    @Override
     public InteractionResult onItemUseFirst(ItemStack stack, UseOnContext context) {
         @Nullable Player player = context.getPlayer();
         BlockPos pos = context.getClickedPos();

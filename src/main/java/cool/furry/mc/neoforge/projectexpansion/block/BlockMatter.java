@@ -18,7 +18,7 @@ public class BlockMatter extends Block implements IHasMatter, IMatterBlock {
     private final Matter matter;
 
     public BlockMatter(BlockBehaviour.Properties properties, Matter matter) {
-        super(properties);
+        super(properties.mapColor(matter.mapColor == null ? MapColor.NONE : matter.mapColor.get()));
         this.matter = matter;
     }
 
@@ -34,11 +34,6 @@ public class BlockMatter extends Block implements IHasMatter, IMatterBlock {
     @Override
     public IMatterType getMatterType() {
         return Util.getMatterForProjectE(getMatter());
-    }
-
-    @Override
-    public MapColor getMapColor(BlockState state, BlockGetter level, BlockPos pos, MapColor defaultColor) {
-        return matter.mapColor == null ? super.getMapColor(state, level, pos, defaultColor) : matter.mapColor.get();
     }
 
     @Override

@@ -32,15 +32,15 @@ import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.material.MapColor;
 import net.minecraft.world.level.material.PushReaction;
 import net.minecraft.world.phys.BlockHitResult;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 
 import javax.annotation.Nullable;
 import java.util.List;
 
 public class BlockTransmutationInterface extends Block implements EntityBlock, IMatterBlock {
     public BlockTransmutationInterface(BlockBehaviour.Properties properties) {
-        super(properties);
+        super(properties.pushReaction(PushReaction.BLOCK).mapColor(MapColor.COLOR_RED));
         this.registerDefaultState(this.stateDefinition.any().setValue(BlockEntityNBTFilterable.FILTER, true));
     }
 
@@ -59,7 +59,7 @@ public class BlockTransmutationInterface extends Block implements EntityBlock, I
         return new BlockEntityTransmutationInterface(pos, state);
     }
 
-    @OnlyIn(Dist.CLIENT)
+    @Environment(EnvType.CLIENT)
     @Override
     public void appendHoverText(ItemStack stack, Item.TooltipContext context, List<Component> list, TooltipFlag tooltipFlag) {
         super.appendHoverText(stack, context, list, tooltipFlag);
@@ -95,15 +95,5 @@ public class BlockTransmutationInterface extends Block implements EntityBlock, I
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
         if (type == BlockEntityTypes.TRANSMUTATION_INTERFACE.get() && !level.isClientSide) return BlockEntityTransmutationInterface::tickServer;
         return null;
-    }
-
-    @Override
-    public PushReaction getPistonPushReaction(BlockState state) {
-        return PushReaction.BLOCK;
-    }
-
-    @Override
-    public MapColor getMapColor(BlockState state, BlockGetter level, BlockPos pos, MapColor defaultColor) {
-        return MapColor.COLOR_RED;
     }
 }

@@ -11,7 +11,7 @@ import net.minecraft.world.level.GameType;
 
 @SuppressWarnings("unused")
 public class SunExposureHelper {
-    public static final TagKey<Item> PROTECTIVE_ITEMS = ItemTags.create(Main.rl("sun_exposure_protection"));
+    public static final TagKey<Item> PROTECTIVE_ITEMS = TagKey.create(net.minecraft.core.registries.Registries.ITEM, Main.rl("sun_exposure_protection"));
 
     private static boolean automaticProtection(ServerPlayer player) {
         return player.gameMode.isCreative() || player.gameMode.getGameModeForPlayer().equals(GameType.SPECTATOR);

@@ -572,7 +572,7 @@
 	"item.projectexpansion.gargantuan_star_vier": "Gargantuan Star Vier",
 	"item.projectexpansion.gargantuan_star_sphere": "Gargantuan Star Sphere",
 	"item.projectexpansion.gargantuan_star_omega": "Gargantuan Star Omega",
-	"itemGroup.projectexpansion": "Project Expansion",
+	"itemGroup.projectexpansion": "ProjectExpansionNeo",
 	"enchantment.projectexpansion.alchemical_collection": "Alchemical Collection",
 	"enchantment.projectexpansion.alchemical_collection.desc": "Converts any mined items with an emc value directly into emc.",
 	"text.projectexpansion.wip": "WIP!",
@@ -630,5 +630,6 @@
 	"tag.item.projectexpansion.matter": "Matter",
 	"tag.item.projectexpansion.power_flower": "Power Flower",
 	"tag.item.projectexpansion.relay": "Relay",
-	"tag.item.projectexpansion.sun_exposure_protection": "Sun Exposure Protection"
+	"tag.item.projectexpansion.sun_exposure_protection": "Sun Exposure Protection",
+	"trinkets.slot.chest.transmutation_tablet": "Transmutation Tablet"
 }

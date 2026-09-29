@@ -29,15 +29,11 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.Fluid;
 import net.minecraft.world.level.material.Fluids;
-import net.neoforged.neoforge.capabilities.Capabilities;
-import net.neoforged.neoforge.capabilities.ICapabilityProvider;
-import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
-import net.neoforged.neoforge.fluids.FluidActionResult;
-import net.neoforged.neoforge.fluids.FluidStack;
-import net.neoforged.neoforge.fluids.FluidUtil;
-import net.neoforged.neoforge.fluids.capability.IFluidHandler;
-import net.neoforged.neoforge.items.IItemHandler;
-import net.neoforged.neoforge.items.ItemHandlerHelper;
+import cool.furry.mc.neoforge.projectexpansion.platform.InventoryCapabilities;
+import java.util.function.BiFunction;
+import cool.furry.mc.neoforge.projectexpansion.platform.CapabilityRegistrar;
+import moze_intel.projecte.api.item_handlers.IItemHandler;
+import moze_intel.projecte.api.item_handlers.ItemHandlerHelper;
 
 import javax.annotation.Nullable;
 import java.math.BigDecimal;
@@ -47,23 +43,39 @@ import java.util.Objects;
 
 @SuppressWarnings("unused")
 public class BlockEntityEMCLink extends BlockEntityNBTFilterable implements IHasMatter {
-    public static final ICapabilityProvider<BlockEntityEMCLink, @org.jetbrains.annotations.Nullable Direction, IEmcStorage> EMC_STORAGE_PROVIDER = (link, side) -> link.getEMCHandler();
-    public static final ICapabilityProvider<BlockEntityEMCLink, @org.jetbrains.annotations.Nullable Direction, IEmcStorageBigInteger> BIG_EMC_STORAGE_PROVIDER = (link, side) -> link.getEMCHandler();
-    public static final ICapabilityProvider<BlockEntityEMCLink, @org.jetbrains.annotations.Nullable Direction, IItemHandler> ITEM_HANDLER_PROVIDER = (link, side) -> link.getItemHandler();
-    public static final ICapabilityProvider<BlockEntityEMCLink, @org.jetbrains.annotations.Nullable Direction, IFluidHandler> FLUID_HANDLER_PROVIDER = (link, side) -> link.getFluidHandler();
+    public static final BiFunction<BlockEntityEMCLink, @org.jetbrains.annotations.Nullable Direction, IEmcStorage> EMC_STORAGE_PROVIDER = (link, side) -> link.getEMCHandler();
+    public static final BiFunction<BlockEntityEMCLink, @org.jetbrains.annotations.Nullable Direction, IEmcStorageBigInteger> BIG_EMC_STORAGE_PROVIDER = (link, side) -> link.getEMCHandler();
+    public static final BiFunction<BlockEntityEMCLink, @org.jetbrains.annotations.Nullable Direction, IItemHandler> ITEM_HANDLER_PROVIDER = (link, side) -> link.getItemHandler();
     public BigInteger emc = BigInteger.ZERO;
     public ItemStack itemStack;
     public Matter matter;
     public BigInteger remainingEMC = BigInteger.ZERO;
     public int remainingImport = 0;
     public int remainingExport = 0;
-    public int remainingFluid = 0;
+    public long remainingFluid = 0;
+    private final net.fabricmc.fabric.api.transfer.v1.transaction.base.SnapshotParticipant<long[]> transferLimits =
+        new net.fabricmc.fabric.api.transfer.v1.transaction.base.SnapshotParticipant<>() {
+            @Override protected long[] createSnapshot() { return new long[]{remainingImport, remainingExport, remainingFluid}; }
+            @Override protected void readSnapshot(long[] values) { remainingImport = (int) values[0]; remainingExport = (int) values[1]; remainingFluid = values[2]; }
+            @Override protected void onFinalCommit() { markDirty(); }
+        };
+    private final cool.furry.mc.neoforge.projectexpansion.platform.VirtualEmcStorage fabricItems =
+        new cool.furry.mc.neoforge.projectexpansion.platform.VirtualEmcStorage(() -> owner, () -> java.util.List.of(itemStack),
+            stack -> getMatter().getEMCLinkInventorySize() > 1 && IEMCProxy.INSTANCE.hasValue(stack) &&
+                (!getFilterStatus() || IEMCProxy.INSTANCE.getPersistentInfo(ItemInfo.fromStack(stack)).equals(ItemInfo.fromStack(stack))),
+            () -> getMatter() == Matter.FINAL ? Integer.MAX_VALUE : remainingImport,
+            () -> getMatter() == Matter.FINAL ? Integer.MAX_VALUE : remainingExport,
+            (amount, transaction) -> { transferLimits.updateSnapshots(transaction); if (getMatter() != Matter.FINAL) remainingImport -= amount; },
+            (amount, transaction) -> { transferLimits.updateSnapshots(transaction); if (getMatter() != Matter.FINAL) remainingExport -= amount; });
+    private final FluidHandler fabricFluids = new FluidHandler();
+    public net.fabricmc.fabric.api.transfer.v1.storage.Storage<net.fabricmc.fabric.api.transfer.v1.item.ItemVariant> fabricItems() { return fabricItems; }
+    public net.fabricmc.fabric.api.transfer.v1.storage.Storage<net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant> fabricFluids() { return fabricFluids; }
 
-    public static void registerCapabilities(RegisterCapabilitiesEvent event) {
+
+    public static void registerCapabilities(CapabilityRegistrar event) {
         event.registerBlockEntity(PECapabilities.EMC_STORAGE_CAPABILITY, BlockEntityTypes.EMC_LINK.get(), EMC_STORAGE_PROVIDER);
         event.registerBlockEntity(cool.furry.mc.neoforge.projectexpansion.registries.Capabilities.BIG_EMC_STORAGE_CAPABILITY, BlockEntityTypes.EMC_LINK.get(), BIG_EMC_STORAGE_PROVIDER);
-        event.registerBlockEntity(Capabilities.ItemHandler.BLOCK, BlockEntityTypes.EMC_LINK.get(), ITEM_HANDLER_PROVIDER);
-        event.registerBlockEntity(Capabilities.FluidHandler.BLOCK, BlockEntityTypes.EMC_LINK.get(), FLUID_HANDLER_PROVIDER);
+        event.registerBlockEntity(InventoryCapabilities.ItemHandler.BLOCK, BlockEntityTypes.EMC_LINK.get(), ITEM_HANDLER_PROVIDER);
     }
 
     public BlockEntityEMCLink(BlockPos pos, BlockState state) {
@@ -80,7 +92,7 @@ public class BlockEntityEMCLink extends BlockEntityNBTFilterable implements IHas
     }
 
     private FluidHandler getFluidHandler() {
-        return new FluidHandler();
+        return fabricFluids;
     }
 
     /*******
@@ -95,7 +107,8 @@ public class BlockEntityEMCLink extends BlockEntityNBTFilterable implements IHas
         if (tag.contains(TagNames.REMAINING_EMC, Tag.TAG_STRING)) remainingEMC = new BigInteger(tag.getString(TagNames.REMAINING_EMC));
         if (tag.contains(TagNames.REMAINING_IMPORT, Tag.TAG_INT)) remainingImport = tag.getInt(TagNames.REMAINING_IMPORT);
         if (tag.contains(TagNames.REMAINING_EXPORT, Tag.TAG_INT)) remainingExport = tag.getInt(TagNames.REMAINING_EXPORT);
-        if (tag.contains(TagNames.REMAINING_FLUID, Tag.TAG_INT)) remainingFluid = tag.getInt(TagNames.REMAINING_FLUID);
+        if (tag.contains(TagNames.REMAINING_FLUID, Tag.TAG_LONG)) remainingFluid = tag.getLong(TagNames.REMAINING_FLUID);
+        else if (tag.contains(TagNames.REMAINING_FLUID, Tag.TAG_INT)) remainingFluid = tag.getInt(TagNames.REMAINING_FLUID) * 81L;
     }
 
     @Override
@@ -106,7 +119,7 @@ public class BlockEntityEMCLink extends BlockEntityNBTFilterable implements IHas
         tag.putString(TagNames.REMAINING_EMC, remainingEMC.toString());
         tag.putInt(TagNames.REMAINING_IMPORT, remainingImport);
         tag.putInt(TagNames.REMAINING_EXPORT, remainingExport);
-        tag.putInt(TagNames.REMAINING_FLUID, remainingFluid);
+        tag.putLong(TagNames.REMAINING_FLUID, remainingFluid);
     }
 
     /********
@@ -138,7 +151,7 @@ public class BlockEntityEMCLink extends BlockEntityNBTFilterable implements IHas
         Matter m = getMatter();
         remainingEMC    = m.getEMCLinkEMCLimit();
         remainingImport = remainingExport = m.getEMCLinkItemLimit();
-        remainingFluid  = m.getEMCLinkFluidLimit();
+        remainingFluid  = m.getEMCLinkFluidLimit() * 81L;
     }
 
     private void setInternalItem(ItemStack stack) {
@@ -169,7 +182,7 @@ public class BlockEntityEMCLink extends BlockEntityNBTFilterable implements IHas
     public InteractionResult handleActivation(Player player, InteractionHand hand) {
         ItemStack inHand = player.getItemInHand(hand);
         ItemHandler itemHandler = getItemHandlerCapability();
-        FluidHandler fluidHandler = getFluidHandlerCapability();
+        FluidHandler fluidHandler = fabricFluids;
 
         if(!super.handleActivation(player, ActivationType.CHECK_OWNERSHIP)) return InteractionResult.CONSUME;
 
@@ -200,31 +213,19 @@ public class BlockEntityEMCLink extends BlockEntityNBTFilterable implements IHas
         }
 
         Fluid fluid = fluidHandler.getFluid();
-        if(fluid != null && fluidHandler.isValid() && inHand.getItem() instanceof BucketItem bucketItem && ((BucketItem) inHand.getItem()).content == Fluids.EMPTY) {
-            if(Config.server.limitEmcLinkVendor.get() && remainingFluid < 1000) {
-                player.displayClientMessage(Lang.Blocks.EMC_LINK_NO_EXPORT_REMAINING.translateColored(ChatFormatting.RED), true);
-                return InteractionResult.CONSUME;
+        if (fluid != null && inHand.is(net.minecraft.world.item.Items.BUCKET)) {
+            try (var transaction = net.fabricmc.fabric.api.transfer.v1.transaction.Transaction.openOuter()) {
+                long bucket = net.fabricmc.fabric.api.transfer.v1.fluid.FluidConstants.BUCKET;
+                long extracted = fluidHandler.extract(net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant.of(fluid), bucket, transaction);
+                if (extracted != bucket) {
+                    player.displayClientMessage(Lang.Blocks.EMC_LINK_NOT_ENOUGH_EMC.translateColored(ChatFormatting.RED,
+                        Component.literal(EMCFormat.format(BigInteger.valueOf(IEMCProxy.INSTANCE.getValue(itemStack))))), true);
+                    return InteractionResult.FAIL;
+                }
+                player.setItemInHand(hand, net.minecraft.world.item.ItemUtils.createFilledResult(inHand, player, new ItemStack(fluid.getBucket())));
+                transaction.commit();
+                return InteractionResult.SUCCESS;
             }
-            long cost = fluidHandler.getFluidCost(1000);
-            @Nullable IKnowledgeProvider provider = Util.getKnowledgeProvider(owner);
-            if(provider == null) {
-                player.displayClientMessage(Lang.FAILED_TO_GET_KNOWLEDGE_PROVIDER.translateColored(ChatFormatting.RED, Util.getPlayer(owner) == null ? owner : Objects.requireNonNull(Util.getPlayer(owner)).getDisplayName()), true);
-                return InteractionResult.FAIL;
-            }
-            BigInteger emc = provider.getEmc();
-            if(emc.compareTo(BigInteger.valueOf(cost)) < 0) {
-                player.displayClientMessage(Lang.Blocks.EMC_LINK_NOT_ENOUGH_EMC.translateColored(ChatFormatting.RED, Component.literal(EMCFormat.format(BigInteger.valueOf(IEMCProxy.INSTANCE.getValue(itemStack)))).setStyle(ColorStyle.GREEN)), true);
-                return InteractionResult.CONSUME;
-            }
-            FluidActionResult fillResult = FluidUtil.tryFillContainer(inHand, fluidHandler, 1000, player, true);
-            if(!fillResult.isSuccess()) return InteractionResult.FAIL;
-            player.getInventory().removeItem(player.getInventory().selected, 1);
-            ItemHandlerHelper.giveItemToPlayer(player, fillResult.getResult());
-            provider.setEmc(emc.subtract(BigInteger.valueOf(cost)));
-            remainingFluid -= 1000;
-            markDirty();
-            if(player instanceof ServerPlayer) provider.syncEmc((ServerPlayer) player);
-            return InteractionResult.CONSUME;
         }
 
         if (inHand.isEmpty() || itemStack.is(inHand.getItem())) {
@@ -237,7 +238,7 @@ public class BlockEntityEMCLink extends BlockEntityNBTFilterable implements IHas
                 player.displayClientMessage(Lang.Blocks.EMC_LINK_NOT_ENOUGH_EMC.translateColored(ChatFormatting.RED, Component.literal(EMCFormat.format(BigInteger.valueOf(IEMCProxy.INSTANCE.getValue(itemStack)))).setStyle(ColorStyle.GREEN)), true);
                 return InteractionResult.CONSUME;
             }
-            ItemHandlerHelper.giveItemToPlayer(player, extract);
+            if (!player.getInventory().add(extract)) player.drop(extract, false);
             return InteractionResult.SUCCESS;
         }
 
@@ -281,7 +282,7 @@ public class BlockEntityEMCLink extends BlockEntityNBTFilterable implements IHas
     }
 
     EMCHandler getEMCHandlerCapability() {
-        return (EMCHandler) WorldHelper.getCapability(level, PECapabilities.EMC_STORAGE_CAPABILITY, worldPosition, getBlockState(), this, null);
+        return (EMCHandler) WorldHelper.getCapability(level, PECapabilities.EMC_STORAGE_CAPABILITY.lookup(), worldPosition, getBlockState(), this, null);
     }
 
     private class ItemHandler implements IItemHandler {
@@ -383,119 +384,59 @@ public class BlockEntityEMCLink extends BlockEntityNBTFilterable implements IHas
     }
 
     ItemHandler getItemHandlerCapability() {
-        return (ItemHandler) WorldHelper.getCapability(level, Capabilities.ItemHandler.BLOCK, worldPosition, getBlockState(), this, null);
+        return getItemHandler();
     }
 
-    private class FluidHandler implements IFluidHandler {
-        public @Nullable Fluid getFluid() {
-            if(!itemStack.isEmpty() && itemStack.getItem() instanceof BucketItem bucketItem) return bucketItem.content;
-            else return null;
+    private class FluidHandler implements net.fabricmc.fabric.api.transfer.v1.storage.Storage<net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant>,
+            net.fabricmc.fabric.api.transfer.v1.storage.StorageView<net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant> {
+        private Fluid getFluid() {
+            return !itemStack.isEmpty() && itemStack.getItem() instanceof BucketItem bucket && bucket.content != Fluids.EMPTY ? bucket.content : null;
         }
-
-        private double getFluidCostPer() {
-            try {
-                long fullCost = IEMCProxy.INSTANCE.getValue(itemStack);
-                long bucketCost = IEMCProxy.INSTANCE.getValue(net.minecraft.world.item.Items.BUCKET);
-                if (bucketCost == 0 && fullCost == 0) return 0D;
-                return (fullCost - ((bucketCost * getMatter().getFluidEfficiencyPercentage()) / 100F))  / 1000D;
-            } catch(ArithmeticException ignore) {
-                return Long.MAX_VALUE;
-            }
+        private BigDecimal bucketPrice() {
+            long full = IEMCProxy.INSTANCE.getValue(itemStack);
+            long empty = IEMCProxy.INSTANCE.getValue(net.minecraft.world.item.Items.BUCKET);
+            return BigDecimal.valueOf(full).subtract(BigDecimal.valueOf(empty)
+                .multiply(BigDecimal.valueOf(getMatter().getFluidEfficiencyPercentage())).divide(BigDecimal.valueOf(100)));
         }
-
-        private boolean isFreeFluid() {
-            return getFluidCostPer() == 0D && Config.server.zeroEmcFluidsAreFree.get();
+        @Override public long insert(net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant resource, long maxAmount,
+                net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext transaction) { return 0; }
+        @Override public long extract(net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant resource, long maxAmount,
+                net.fabricmc.fabric.api.transfer.v1.transaction.TransactionContext transaction) {
+            if (resource.isBlank() || maxAmount <= 0 || !resource.equals(getResource())) return 0;
+            var account = cool.furry.mc.neoforge.projectexpansion.platform.EmcTransactions.get(owner);
+            if (account == null) return 0;
+            BigDecimal price = bucketPrice();
+            if (price.signum() < 0 || price.signum() == 0 && !Config.server.zeroEmcFluidsAreFree.get()) return 0;
+            long amount = Math.min(maxAmount, Math.max(0, remainingFluid));
+            long bucket = net.fabricmc.fabric.api.transfer.v1.fluid.FluidConstants.BUCKET;
+            if (price.signum() > 0) amount = new BigDecimal(account.balance()).multiply(BigDecimal.valueOf(bucket))
+                .divide(price, 0, RoundingMode.FLOOR).min(BigDecimal.valueOf(amount)).longValue();
+            if (amount <= 0) return 0;
+            BigInteger cost = price.multiply(BigDecimal.valueOf(amount)).divide(BigDecimal.valueOf(bucket), 0, RoundingMode.CEILING).toBigIntegerExact();
+            account.change(cost.negate(), transaction);
+            transferLimits.updateSnapshots(transaction);
+            if (getMatter() != Matter.FINAL) remainingFluid -= amount;
+            return amount;
         }
-
-        private boolean isValid() {
-            return getFluid() != null && (getFluidCostPer() != 0D || isFreeFluid());
-        }
-
-        private long getFluidCost(double amount) {
-            try {
-                double cost = getFluidCostPer();
-                return (long) Math.ceil(cost * amount);
-            } catch(ArithmeticException ignore) {
-                return Long.MAX_VALUE;
-            }
-        }
-
-        @Override
-        public int getTanks() {
-            return 1;
-        }
-
-        @Override
-        public FluidStack getFluidInTank(int tank) {
-            if(tank != 0) {
-                return FluidStack.EMPTY;
-            }
-
+        @Override public net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant getResource() {
             Fluid fluid = getFluid();
-            if(fluid == null || !isValid()) return FluidStack.EMPTY;
-            return new FluidStack(fluid, remainingFluid);
+            return fluid == null ? net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant.blank() : net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant.of(fluid);
         }
-
-        @Override
-        public int getTankCapacity(int tank) {
-            if(tank != 0) {
-                return 0;
-            }
-
-            return remainingFluid;
+        @Override public boolean isResourceBlank() { return getResource().isBlank(); }
+        @Override public long getAmount() {
+            if (isResourceBlank()) return 0;
+            var account = cool.furry.mc.neoforge.projectexpansion.platform.EmcTransactions.get(owner);
+            if (account == null) return 0;
+            BigDecimal price = bucketPrice();
+            if (price.signum() < 0 || price.signum() == 0 && !Config.server.zeroEmcFluidsAreFree.get()) return 0;
+            long quota = Math.max(0, remainingFluid);
+            return price.signum() == 0 ? quota : new BigDecimal(account.balance())
+                .multiply(BigDecimal.valueOf(net.fabricmc.fabric.api.transfer.v1.fluid.FluidConstants.BUCKET))
+                .divide(price, 0, RoundingMode.FLOOR).min(BigDecimal.valueOf(quota)).longValue();
         }
-
-        @Override
-        public boolean isFluidValid(int tank, FluidStack stack) {
-            return false;
+        @Override public long getCapacity() { return Math.max(0, remainingFluid); }
+        @Override public java.util.Iterator<net.fabricmc.fabric.api.transfer.v1.storage.StorageView<net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant>> iterator() {
+            return java.util.Collections.<net.fabricmc.fabric.api.transfer.v1.storage.StorageView<net.fabricmc.fabric.api.transfer.v1.fluid.FluidVariant>>singleton(this).iterator();
         }
-
-        @Override
-        public int fill(FluidStack resource, FluidAction action) {
-            return 0;
-        }
-
-        @Override
-        public FluidStack drain(FluidStack resource, FluidAction action) {
-            Fluid fluid = getFluid();
-            if (!isValid() || !resource.getFluid().equals(fluid)) return FluidStack.EMPTY;
-            return drain(resource.getAmount(), action);
-        }
-
-        @Override
-        public FluidStack drain(int maxDrain, FluidAction action) {
-            boolean isFinal = getMatter() == Matter.FINAL;
-            Fluid fluid = getFluid();
-            if(fluid == null || !isValid() || Util.getPlayer(owner) == null) return FluidStack.EMPTY;
-            if(!isFinal && maxDrain > remainingFluid) maxDrain = remainingFluid;
-            if(maxDrain > remainingFluid) maxDrain = remainingFluid;
-            long cost = getFluidCost(maxDrain);
-            @Nullable IKnowledgeProvider provider = Util.getKnowledgeProvider(owner);
-            if(provider == null) return FluidStack.EMPTY;
-            BigInteger emc = provider.getEmc();
-            BigDecimal dEMC = new BigDecimal(emc);
-            if(dEMC.compareTo(BigDecimal.valueOf(getFluidCostPer())) < 0) return FluidStack.EMPTY;
-            if(emc.compareTo(BigInteger.valueOf(cost)) < 0) {
-                // this is a bad way to estimate, it rounds up so we'll usually say less than what's really possible
-                BigDecimal max = dEMC.divide(BigDecimal.valueOf(getFluidCostPer()), RoundingMode.FLOOR);
-                maxDrain = Util.safeIntValue(max);
-                if(!isFinal &&maxDrain > remainingFluid) maxDrain = remainingFluid;
-                if(maxDrain < 1) return FluidStack.EMPTY;
-                cost = getFluidCost(maxDrain);
-            }
-            if(action.execute()) {
-                if(!isFinal) remainingFluid -= maxDrain;
-                markDirty();
-                if(!isFreeFluid()) {
-                    provider.setEmc(emc.subtract(BigInteger.valueOf(cost)));
-                    provider.syncEmc(Objects.requireNonNull(Util.getPlayer(owner)));
-                }
-            }
-            return new FluidStack(fluid, maxDrain);
-        }
-    }
-
-    FluidHandler getFluidHandlerCapability() {
-        return (FluidHandler) WorldHelper.getCapability(level, Capabilities.FluidHandler.BLOCK, worldPosition, getBlockState(), this, null);
     }
 }

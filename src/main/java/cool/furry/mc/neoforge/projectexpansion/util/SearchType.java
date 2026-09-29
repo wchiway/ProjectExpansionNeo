@@ -2,7 +2,7 @@ package cool.furry.mc.neoforge.projectexpansion.util;
 
 import moze_intel.projecte.utils.text.ILangEntry;
 import net.minecraft.network.chat.Component;
-import net.neoforged.neoforge.common.TranslatableEnum;
+import cool.furry.mc.neoforge.projectexpansion.util.TranslatableEnum;
 
 public enum SearchType implements TranslatableEnum, ILangEntry {
     NORMAL(Lang.Configuration.SEARCH_TYPE_NORMAL, false, false),

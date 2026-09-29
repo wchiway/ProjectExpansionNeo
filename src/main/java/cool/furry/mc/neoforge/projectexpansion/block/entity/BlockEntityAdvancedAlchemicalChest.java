@@ -23,14 +23,14 @@ import net.minecraft.world.level.block.entity.ChestLidController;
 import net.minecraft.world.level.block.entity.ContainerOpenersCounter;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
-import net.neoforged.neoforge.capabilities.Capabilities;
-import net.neoforged.neoforge.capabilities.ICapabilityProvider;
-import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
-import net.neoforged.neoforge.items.IItemHandler;
+import cool.furry.mc.neoforge.projectexpansion.platform.InventoryCapabilities;
+import java.util.function.BiFunction;
+import cool.furry.mc.neoforge.projectexpansion.platform.CapabilityRegistrar;
+import moze_intel.projecte.api.item_handlers.IItemHandler;
 import org.jetbrains.annotations.Nullable;
 
 public class BlockEntityAdvancedAlchemicalChest extends BlockEntityOwnable implements IChestLike, IHasColor, IItemHandler {
-	public static final ICapabilityProvider<BlockEntityAdvancedAlchemicalChest, @Nullable Direction, IItemHandler> ITEM_HANDLER_CAPABILITY = (be, side) -> be.getBagItemHandler();
+	public static final BiFunction<BlockEntityAdvancedAlchemicalChest, @Nullable Direction, IItemHandler> ITEM_HANDLER_CAPABILITY = (be, side) -> be.getBagItemHandler();
 	private final ChestLidController lidController = new ChestLidController();
 
 	private final ContainerOpenersCounter openersCounter = new ContainerOpenersCounter() {
@@ -118,8 +118,8 @@ public class BlockEntityAdvancedAlchemicalChest extends BlockEntityOwnable imple
 		super(BlockEntityTypes.ADVANCED_ALCHEMICAL_CHEST.get(), pos, state);
 	}
 
-	public static void registerCapabilities(RegisterCapabilitiesEvent event) {
-		event.registerBlockEntity(Capabilities.ItemHandler.BLOCK, BlockEntityTypes.ADVANCED_ALCHEMICAL_CHEST.get(), ITEM_HANDLER_CAPABILITY);
+	public static void registerCapabilities(CapabilityRegistrar event) {
+		event.registerBlockEntity(InventoryCapabilities.ItemHandler.BLOCK, BlockEntityTypes.ADVANCED_ALCHEMICAL_CHEST.get(), ITEM_HANDLER_CAPABILITY);
 	}
 
 	BagItemHandler getBagItemHandler() {
@@ -141,7 +141,7 @@ public class BlockEntityAdvancedAlchemicalChest extends BlockEntityOwnable imple
 			return null;
 		}
 
-        @Nullable IAlchBagProvider provider = player.getCapability(PECapabilities.ALCH_BAG_CAPABILITY);
+        @Nullable IAlchBagProvider provider = PECapabilities.ALCH_BAG_CAPABILITY.find(player);
         if (provider == null) return null;
         return provider.getBag(getColor());
 	}

@@ -29,9 +29,8 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
-import net.neoforged.neoforge.attachment.IAttachmentHolder;
-import net.neoforged.neoforge.network.PacketDistributor;
-import net.neoforged.neoforge.server.ServerLifecycleHooks;
+import moze_intel.projecte.network.PENetwork;
+import cool.furry.mc.neoforge.projectexpansion.platform.ServerContext;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -45,7 +44,7 @@ public record CapabilityAlchemicalBookLocations(ItemAlchemicalBook.Mode mode, @N
     public static final int ARCANE_DISTANCE_RATIO = 0;
 
     public static IAlchemicalBookLocationsProvider fromPlayer(Player player) {
-        IAlchemicalBookLocationsProvider provider = player.getCapability(Capabilities.ALCHEMICAL_BOOK_LOCATIONS_ENTITY);
+        IAlchemicalBookLocationsProvider provider = Capabilities.ALCHEMICAL_BOOK_LOCATIONS_ENTITY.find(player);
         if (provider == null) {
             throw new IllegalStateException("Player does not have expected capability");
         }
@@ -53,7 +52,7 @@ public record CapabilityAlchemicalBookLocations(ItemAlchemicalBook.Mode mode, @N
     }
 
     public static IAlchemicalBookLocationsProvider fromItemStack(ItemStack stack) {
-        IAlchemicalBookLocationsProvider provider = stack.getCapability(Capabilities.ALCHEMICAL_BOOK_LOCATIONS_ITEM);
+        IAlchemicalBookLocationsProvider provider = Capabilities.ALCHEMICAL_BOOK_LOCATIONS_ITEM.find(stack);
         if (provider == null) {
             throw new IllegalStateException("ItemStack does not have expected capability");
         }
@@ -328,9 +327,9 @@ public record CapabilityAlchemicalBookLocations(ItemAlchemicalBook.Mode mode, @N
 
     private AlchemicalBookLocationData getData() {
         if (player != null) {
-            return player.getData(AttachmentTypes.ALCHEMICAL_BOOK_LOCATIONS);
+            return player.getAttachedOrCreate(AttachmentTypes.ALCHEMICAL_BOOK_LOCATIONS);
         } else if (itemStack != null) {
-            return itemStack.getOrDefault(DataComponentTypes.ALCHEMICAL_BOOK_LOCATIONS, new AlchemicalBookLocationData());
+            return itemStack.getOrDefault(DataComponentTypes.ALCHEMICAL_BOOK_LOCATIONS.get(), new AlchemicalBookLocationData());
         } else {
             throw new NullPointerException("Both Player and ItemStack are null");
         }
@@ -493,7 +492,7 @@ public record CapabilityAlchemicalBookLocations(ItemAlchemicalBook.Mode mode, @N
         } else if (itemStack != null) {
             canEdit = ItemAlchemicalBook.canEdit(itemStack, player);
         }
-        PacketDistributor.sendToPlayer(player, new PacketSyncAlchemicalBookLocations(getLocations(), canEdit));
+        PENetwork.sendToPlayer(player, new PacketSyncAlchemicalBookLocations(getLocations(), canEdit));
     }
 
     @Override
@@ -515,8 +514,8 @@ public record CapabilityAlchemicalBookLocations(ItemAlchemicalBook.Mode mode, @N
     @Override
     public void syncToOtherPlayers() {
         if (player == null) return;
-        for (String playerName : Objects.requireNonNull(ServerLifecycleHooks.getCurrentServer()).getPlayerNames()) {
-            ServerPlayer target = ServerLifecycleHooks.getCurrentServer().getPlayerList().getPlayerByName(playerName);
+        for (String playerName : Objects.requireNonNull(ServerContext.getCurrentServer()).getPlayerNames()) {
+            ServerPlayer target = ServerContext.getCurrentServer().getPlayerList().getPlayerByName(playerName);
             if (target == null) continue;
             syncToPlayer(target);
         }
@@ -543,9 +542,9 @@ public record CapabilityAlchemicalBookLocations(ItemAlchemicalBook.Mode mode, @N
 
     private void markDirty(AlchemicalBookLocationData provider) {
         if (itemStack != null) {
-            itemStack.set(DataComponentTypes.ALCHEMICAL_BOOK_LOCATIONS, provider);
+            itemStack.set(DataComponentTypes.ALCHEMICAL_BOOK_LOCATIONS.get(), provider);
         } else if (player != null) {
-            player.setData(AttachmentTypes.ALCHEMICAL_BOOK_LOCATIONS, provider);
+            player.setAttached(AttachmentTypes.ALCHEMICAL_BOOK_LOCATIONS, provider);
         } else {
             throw new NullPointerException("Both Player and ItemStack are null");
         }
@@ -571,7 +570,7 @@ public record CapabilityAlchemicalBookLocations(ItemAlchemicalBook.Mode mode, @N
         }
 
         @Nullable
-        public CapabilityAlchemicalBookLocations.AlchemicalBookLocationData copy(IAttachmentHolder holder, HolderLookup.Provider registries) {
+        public CapabilityAlchemicalBookLocations.AlchemicalBookLocationData copy() {
             List<TeleportLocation> locationsCopy = new ArrayList<>();
             for (TeleportLocation location : getLocations()) {
                 locationsCopy.add(location.copy());

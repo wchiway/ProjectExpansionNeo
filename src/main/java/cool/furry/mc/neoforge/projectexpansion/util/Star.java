@@ -4,7 +4,7 @@ import cool.furry.mc.neoforge.projectexpansion.item.ItemStar;
 import cool.furry.mc.neoforge.projectexpansion.registries.Items;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
-import net.neoforged.neoforge.registries.DeferredHolder;
+import moze_intel.projecte.gameObjs.registration.PEDeferredHolder;
 
 import javax.annotation.Nullable;
 import java.util.Arrays;
@@ -30,10 +30,10 @@ public enum Star {
 
     public final String name;
     @Nullable
-    private DeferredHolder<Item, ItemStar> itemMagnum = null;
+    private PEDeferredHolder<Item, ItemStar> itemMagnum = null;
     @Nullable
-    private DeferredHolder<Item, ItemStar> itemColossal = null;
-    private DeferredHolder<Item, ItemStar> itemGargantuan = null;
+    private PEDeferredHolder<Item, ItemStar> itemColossal = null;
+    private PEDeferredHolder<Item, ItemStar> itemGargantuan = null;
     Star(String name) {
         this.name = name;
     }

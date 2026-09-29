@@ -6,7 +6,7 @@ import moze_intel.projecte.api.capabilities.IKnowledgeProvider;
 import moze_intel.projecte.api.capabilities.PECapabilities;
 import moze_intel.projecte.network.packets.to_client.knowledge.KnowledgeSyncChangePKT;
 import net.minecraft.world.entity.player.Player;
-import net.neoforged.neoforge.network.handling.IPayloadContext;
+import moze_intel.projecte.network.PEPacketContext;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -24,10 +24,10 @@ public class KnowledgeSyncChangePKTMixin {
     @Final
     private ItemInfo change;
 
-    @Inject(at = @At("HEAD"), method = "handle(Lnet/neoforged/neoforge/network/handling/IPayloadContext;)V")
-    public void handle(IPayloadContext context, CallbackInfo ci) {
+    @Inject(at = @At("HEAD"), method = "handle")
+    public void handle(PEPacketContext context, CallbackInfo ci) {
         Player player = context.player();
-        IKnowledgeProvider knowledge = player.getCapability(PECapabilities.KNOWLEDGE_CAPABILITY);
+        IKnowledgeProvider knowledge = PECapabilities.KNOWLEDGE_CAPABILITY.find(player);
         if (knowledge != null) {
             if (learned) {
                 if (!knowledge.hasKnowledge(change) && knowledge.addKnowledge(change) && player.containerMenu instanceof ContainerArcaneTransmutationTablet container) {

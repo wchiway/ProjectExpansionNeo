@@ -19,8 +19,8 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Rarity;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.Level;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -30,7 +30,7 @@ public class ItemArcaneTransmutationTablet extends Item implements ITransmutatio
         super(new Properties().rarity(Rarity.RARE).stacksTo(1).fireResistant());
     }
 
-    @OnlyIn(Dist.CLIENT)
+    @Environment(EnvType.CLIENT)
     @Override
     public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> list, TooltipFlag tooltipFlag) {
         super.appendHoverText(stack, context, list, tooltipFlag);
@@ -49,19 +49,19 @@ public class ItemArcaneTransmutationTablet extends Item implements ITransmutatio
 
     @Override
     public void openContainer(Player player, InteractionHand hand, int selected) {
-        player.openMenu(new Provider(hand), (buf) -> ContainerData.inHand(buf, hand, selected));
+        cool.furry.mc.neoforge.projectexpansion.platform.Menus.open(player, new Provider(hand), (buf) -> ContainerData.inHand(buf, hand, selected));
     }
 
     @Override
     public void openContainer(Player player) {
-        player.openMenu(new Provider(null), ContainerData::noHand);
+        cool.furry.mc.neoforge.projectexpansion.platform.Menus.open(player, new Provider(null), ContainerData::noHand);
     }
 
     private record Provider(@Nullable InteractionHand hand) implements MenuProvider {
         @Nullable
         @Override
         public AbstractContainerMenu createMenu(int windowId, Inventory inventory, Player player) {
-            IKnowledgeProvider provider = player.getCapability(PECapabilities.KNOWLEDGE_CAPABILITY);
+            IKnowledgeProvider provider = PECapabilities.KNOWLEDGE_CAPABILITY.find(player);
             if (provider == null) return null;
             return new ContainerArcaneTransmutationTablet(windowId, inventory, provider, hand, inventory.selected);
         }

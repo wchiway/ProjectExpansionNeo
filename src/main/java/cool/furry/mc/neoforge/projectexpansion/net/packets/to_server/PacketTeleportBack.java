@@ -17,7 +17,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.neoforged.neoforge.network.handling.IPayloadContext;
+import moze_intel.projecte.network.PEPacketContext;
 
 public record PacketTeleportBack(Player player, InteractionHand hand) implements IPacket {
     public static final CustomPacketPayload.Type<PacketTeleportBack> TYPE = new CustomPacketPayload.Type<>(Main.rl("teleport_back"));
@@ -28,7 +28,7 @@ public record PacketTeleportBack(Player player, InteractionHand hand) implements
     );
 
     @Override
-    public void handle(IPayloadContext context) {
+    public void handle(PEPacketContext context) {
         ItemStack stack = player.getItemInHand(hand);
         if(stack.getItem() instanceof ItemAlchemicalBook book) {
             try {

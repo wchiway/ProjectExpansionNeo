@@ -5,7 +5,7 @@ import moze_intel.projecte.gameObjs.container.AlchBagContainer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
-import net.neoforged.neoforge.items.IItemHandlerModifiable;
+import moze_intel.projecte.api.item_handlers.IItemHandlerModifiable;
 
 // yet again more "inspiration" from ProjectE
 // https://github.com/sinkillerj/ProjectE/blob/98aee771bd/src/main/java/moze_intel/projecte/gameObjs/container/EmcChestBlockEntityContainer.java

@@ -11,14 +11,11 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.item.Item;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
+import cool.furry.mc.neoforge.projectexpansion.platform.CapabilityRegistrar;
 
-@EventBusSubscriber(modid = Main.MOD_ID, bus = EventBusSubscriber.Bus.MOD)
 public class CapabilityEvents {
-    @SubscribeEvent
-    public static void registerCapabilities(RegisterCapabilitiesEvent event) {
+
+    public static void registerCapabilities(CapabilityRegistrar event) {
         event.registerEntity(
                 Capabilities.ALCHEMICAL_BOOK_LOCATIONS_ENTITY,
                 EntityType.PLAYER,

@@ -1,7 +1,7 @@
 package cool.furry.mc.neoforge.projectexpansion.mixin;
 
 import moze_intel.projecte.PECore;
-import net.neoforged.fml.loading.FMLEnvironment;
+import net.fabricmc.loader.api.FabricLoader;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -12,7 +12,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public class ShutTheFuckUpMixin {
     @Inject(at = @At("HEAD"), method = "debugLog(Ljava/lang/String;[Ljava/lang/Object;)V", cancellable = true)
     private static void debugLog(String msg, Object[] args, CallbackInfo ci) {
-        if(FMLEnvironment.production) return;
+        if(!FabricLoader.getInstance().isDevelopmentEnvironment()) return;
         if(msg.equals("** RECEIVED TRANSMUTATION EMC DATA CLIENTSIDE **")) {
             ci.cancel();
         }

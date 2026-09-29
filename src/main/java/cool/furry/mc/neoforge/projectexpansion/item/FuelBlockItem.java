@@ -16,7 +16,6 @@ public class FuelBlockItem extends BlockItem {
     }
 
 
-    @Override
     public int getBurnTime(ItemStack stack, @Nullable RecipeType<?> recipeType) {
         // 9 single items combined
         return level.getBurnTime(recipeType) * 9;

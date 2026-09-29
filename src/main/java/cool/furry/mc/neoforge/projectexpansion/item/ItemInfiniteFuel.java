@@ -15,8 +15,8 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Rarity;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.crafting.RecipeType;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 
 import javax.annotation.Nullable;
 import java.math.BigInteger;
@@ -29,7 +29,7 @@ public class ItemInfiniteFuel extends Item {
         super(new Properties().stacksTo(1).rarity(Rarity.RARE));
     }
 
-    @OnlyIn(Dist.CLIENT)
+    @Environment(EnvType.CLIENT)
     @Override
     public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> list, TooltipFlag tooltipFlag) {
         super.appendHoverText(stack, context, list, tooltipFlag);
@@ -37,30 +37,25 @@ public class ItemInfiniteFuel extends Item {
         list.add(Lang.COST.translateColored(ChatFormatting.RED, EMCFormat.getComponent(Config.server.infiniteFuelCost.get()).setStyle(ColorStyle.GRAY)));
     }
 
-    @Override
     public int getBurnTime(ItemStack stack, @Nullable RecipeType<?> recipeType) {
-        @Nullable DataComponentTypes.OwnerData owner = stack.get(DataComponentTypes.OWNER);
+        @Nullable DataComponentTypes.OwnerData owner = stack.get(DataComponentTypes.OWNER.get());
         @Nullable IKnowledgeProvider provider = owner == null ? null : Util.getKnowledgeProvider(owner.uuid());
         if (owner == null || provider == null) return 0;
         return (Config.server.infiniteFuelCost.get() == 0 || Config.server.infiniteFuelBurnTime.get() == 0) ? 0 : provider.getEmc().compareTo(BigInteger.valueOf(Config.server.infiniteFuelCost.get())) < 0 ? 0 : Config.server.infiniteFuelBurnTime.get();
     }
 
-    @Override
-    public boolean hasCraftingRemainingItem(ItemStack stack) {
-        return true;
-    }
 
     @Override
-    public ItemStack getCraftingRemainingItem(ItemStack stack) {
-        DataComponentTypes.OwnerData ownerData = stack.get(DataComponentTypes.OWNER);
+    public ItemStack getRecipeRemainder(ItemStack stack) {
+        DataComponentTypes.OwnerData ownerData = stack.get(DataComponentTypes.OWNER.get());
         @Nullable UUID owner = ownerData == null ? null : ownerData.uuid();
         if (owner == null)
-            return stack;
+            return stack.copy();
         ServerPlayer player = Util.getPlayer(owner);
         @Nullable IKnowledgeProvider provider = Util.getKnowledgeProvider(owner);
-        if (provider == null) return stack;
+        if (provider == null) return stack.copy();
         provider.setEmc(provider.getEmc().subtract(BigInteger.valueOf(Config.server.infiniteFuelCost.get())));
         if (player != null) provider.syncEmc(player);
-        return stack;
+        return stack.copy();
     }
 }

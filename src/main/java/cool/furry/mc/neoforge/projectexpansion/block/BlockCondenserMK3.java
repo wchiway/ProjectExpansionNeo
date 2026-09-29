@@ -41,11 +41,11 @@ import net.minecraft.world.level.pathfinder.PathComputationType;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
-import net.neoforged.neoforge.capabilities.Capabilities;
-import net.neoforged.neoforge.items.IItemHandler;
-import net.neoforged.neoforge.items.ItemHandlerHelper;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import cool.furry.mc.neoforge.projectexpansion.platform.InventoryCapabilities;
+import moze_intel.projecte.api.item_handlers.IItemHandler;
+import moze_intel.projecte.api.item_handlers.ItemHandlerHelper;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -69,7 +69,7 @@ public class BlockCondenserMK3 extends BaseEntityBlock implements SimpleWaterlog
         builder.add(BlockStateProperties.WATERLOGGED);
     }
 
-    @OnlyIn(Dist.CLIENT)
+    @Environment(EnvType.CLIENT)
     @Override
     public void appendHoverText(ItemStack stack, Item.TooltipContext context, List<Component> list, TooltipFlag tooltipFlag) {
         super.appendHoverText(stack, context, list, tooltipFlag);
@@ -105,7 +105,7 @@ public class BlockCondenserMK3 extends BaseEntityBlock implements SimpleWaterlog
         }
         BlockEntityCondenserMK3 chest = WorldHelper.getBlockEntity(BlockEntityCondenserMK3.class, level, pos, true);
         if (chest != null) {
-            player.openMenu(chest, pos);
+            cool.furry.mc.neoforge.projectexpansion.platform.Menus.open(player, chest, pos);
             player.awardStat(Stats.OPEN_CHEST);
             PiglinAi.angerNearbyPiglins(player, true);
         }
@@ -143,7 +143,7 @@ public class BlockCondenserMK3 extends BaseEntityBlock implements SimpleWaterlog
     @Override
     @Deprecated
     public int getAnalogOutputSignal(BlockState state, Level level, BlockPos pos) {
-        return ItemHandlerHelper.calcRedstoneFromInventory(WorldHelper.getCapability(level, Capabilities.ItemHandler.BLOCK, pos, state, null, null));
+        return ItemHandlerHelper.calcRedstoneFromInventory(WorldHelper.getItemHandler(level, pos, state, null, null));
     }
 
     @Override
@@ -166,7 +166,7 @@ public class BlockCondenserMK3 extends BaseEntityBlock implements SimpleWaterlog
     public void onRemove(BlockState state, Level level, BlockPos pos, BlockState newState, boolean isMoving) {
         if (state.getBlock() != newState.getBlock()) {
             for (Direction direction : Direction.values()) {
-                IItemHandler handler = WorldHelper.getCapability(level, Capabilities.ItemHandler.BLOCK, pos, state, null, direction);
+                IItemHandler handler = WorldHelper.getItemHandler(level, pos, state, null, direction);
                 WorldHelper.dropInventory(handler, level, pos);
             }
             super.onRemove(state, level, pos, newState, isMoving);

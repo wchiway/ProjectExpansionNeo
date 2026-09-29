@@ -43,14 +43,14 @@ public class ItemKnowledgeSharingBook extends Item {
         if(player.isCrouching()) {
             if(!level.isClientSide) {
                 DataComponentTypes.OwnerData data = new DataComponentTypes.OwnerData(player.getUUID(), player.getName().getString());
-                stack.set(DataComponentTypes.OWNER, data);
+                stack.set(DataComponentTypes.OWNER.get(), data);
                 level.playSound(null, player.position().x, player.position().y, player.position().z, SoundEvents.KNOWLEDGE_SHARING_BOOK_STORE.get(), SoundSource.PLAYERS, 0.8F, 0.8F + level.random.nextFloat() * 0.4F);
                 player.displayClientMessage(Lang.Items.KNOWLEDGE_SHARING_BOOK_STORED.translateColored(ChatFormatting.GREEN), true);
             }
             
             return InteractionResultHolder.sidedSuccess(stack, level.isClientSide);
         } else {
-            DataComponentTypes.OwnerData data = stack.get(DataComponentTypes.OWNER);
+            DataComponentTypes.OwnerData data = stack.get(DataComponentTypes.OWNER.get());
             if(data != null) {
                 UUID owner = data.uuid();
                 if(player.getUUID().equals(owner)) {
@@ -78,8 +78,8 @@ public class ItemKnowledgeSharingBook extends Item {
                             learned++;
                         }
                     }
-                    stack.set(DataComponentTypes.LAST_USED, new BasicDataComponentTypes.LongValue(level.getGameTime()));
-                    stack.set(DataComponentTypes.KNOWLEDGE_GAINED, new BasicDataComponentTypes.LongValue(learned));
+                    stack.set(DataComponentTypes.LAST_USED.get(), new BasicDataComponentTypes.LongValue(level.getGameTime()));
+                    stack.set(DataComponentTypes.KNOWLEDGE_GAINED.get(), new BasicDataComponentTypes.LongValue(learned));
                     if(learned > 0) {
                         learnerProvider.sync((ServerPlayer) player);
                         if(learned > 100) {
@@ -116,14 +116,14 @@ public class ItemKnowledgeSharingBook extends Item {
 
     @Override
     public boolean isFoil(ItemStack stack) {
-        return stack.has(DataComponentTypes.OWNER);
+        return stack.has(DataComponentTypes.OWNER.get());
     }
 
     @Override
     public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> tooltip, TooltipFlag flag) {
         super.appendHoverText(stack, context, tooltip, flag);
-        if(stack.has(DataComponentTypes.OWNER)) {
-            tooltip.add(Lang.Items.KNOWLEDGE_SHARING_BOOK_SELECTED.translateColored(ChatFormatting.GRAY, Component.literal(Objects.requireNonNull(stack.get(DataComponentTypes.OWNER)).name()).setStyle(ColorStyle.AQUA)));
+        if(stack.has(DataComponentTypes.OWNER.get())) {
+            tooltip.add(Lang.Items.KNOWLEDGE_SHARING_BOOK_SELECTED.translateColored(ChatFormatting.GRAY, Component.literal(Objects.requireNonNull(stack.get(DataComponentTypes.OWNER.get())).name()).setStyle(ColorStyle.AQUA)));
         }
     }
 }

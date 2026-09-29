@@ -27,15 +27,15 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import net.neoforged.neoforge.capabilities.Capabilities;
-import net.neoforged.neoforge.capabilities.ICapabilityProvider;
-import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
-import net.neoforged.neoforge.items.IItemHandler;
-import net.neoforged.neoforge.items.IItemHandlerModifiable;
-import net.neoforged.neoforge.items.ItemHandlerHelper;
-import net.neoforged.neoforge.items.ItemStackHandler;
-import net.neoforged.neoforge.items.wrapper.CombinedInvWrapper;
-import net.neoforged.neoforge.items.wrapper.RangedWrapper;
+import cool.furry.mc.neoforge.projectexpansion.platform.InventoryCapabilities;
+import java.util.function.BiFunction;
+import cool.furry.mc.neoforge.projectexpansion.platform.CapabilityRegistrar;
+import moze_intel.projecte.api.item_handlers.IItemHandler;
+import moze_intel.projecte.api.item_handlers.IItemHandlerModifiable;
+import moze_intel.projecte.api.item_handlers.ItemHandlerHelper;
+import moze_intel.projecte.api.item_handlers.ItemStackHandler;
+import moze_intel.projecte.api.item_handlers.CombinedInvWrapper;
+import moze_intel.projecte.api.item_handlers.RangedWrapper;
 import org.jetbrains.annotations.Nullable;
 
 import java.math.BigDecimal;
@@ -45,7 +45,7 @@ import java.util.Objects;
 
 @SuppressWarnings("unused")
 public class BlockEntityCollector extends BlockEntityEMC implements IHasMatter, IHasSunBonus, IGeneratesEMC, MenuProvider {
-    public static final ICapabilityProvider<BlockEntityCollector, @Nullable Direction, IItemHandler> ITEM_HANDLER_CAPABILITY = (collector, side) -> {
+    public static final BiFunction<BlockEntityCollector, @Nullable Direction, IItemHandler> ITEM_HANDLER_CAPABILITY = (collector, side) -> {
         if (side == null) {
             return collector.joined;
         } else if (side.getAxis().isVertical()) {
@@ -103,8 +103,8 @@ public class BlockEntityCollector extends BlockEntityEMC implements IHasMatter, 
         resetStackHandlers();
     }
 
-    public static void registerCapabilities(RegisterCapabilitiesEvent event) {
-        event.registerBlockEntity(Capabilities.ItemHandler.BLOCK, BlockEntityTypes.COLLECTOR.get(), ITEM_HANDLER_CAPABILITY);
+    public static void registerCapabilities(CapabilityRegistrar event) {
+        event.registerBlockEntity(InventoryCapabilities.ItemHandler.BLOCK, BlockEntityTypes.COLLECTOR.get(), ITEM_HANDLER_CAPABILITY);
         BlockEntityEMC.registerCapabilities(event, BlockEntityTypes.COLLECTOR.get());
     }
 
@@ -188,7 +188,7 @@ public class BlockEntityCollector extends BlockEntityEMC implements IHasMatter, 
         if (getStoredEmcBigInteger().compareTo(BigInteger.ZERO) > 0) {
             ItemStack upgrading = getUpgrading();
             if (hasChargeableItem) {
-                IItemEmcHolder emcHolder = upgrading.getCapability(PECapabilities.EMC_HOLDER_ITEM_CAPABILITY);
+                IItemEmcHolder emcHolder = PECapabilities.EMC_HOLDER_ITEM_CAPABILITY.find(upgrading);
                 if (emcHolder != null) {
                     BigInteger toAdd = getStoredEmcBigInteger();
                     if (toAdd.compareTo(BigInteger.ZERO) < 1) return;
@@ -255,7 +255,7 @@ public class BlockEntityCollector extends BlockEntityEMC implements IHasMatter, 
     public long getItemCharge() {
         ItemStack upgrading = getUpgrading();
         if (!upgrading.isEmpty()) {
-            IItemEmcHolder emcHolder = upgrading.getCapability(PECapabilities.EMC_HOLDER_ITEM_CAPABILITY);
+            IItemEmcHolder emcHolder = PECapabilities.EMC_HOLDER_ITEM_CAPABILITY.find(upgrading);
             if (emcHolder == null) {
                 return -1;
             } else {
@@ -271,7 +271,7 @@ public class BlockEntityCollector extends BlockEntityEMC implements IHasMatter, 
         if (upgrading.isEmpty() || charge <= 0) {
             return -1;
         }
-        IItemEmcHolder emcHolder = upgrading.getCapability(PECapabilities.EMC_HOLDER_ITEM_CAPABILITY);
+        IItemEmcHolder emcHolder = PECapabilities.EMC_HOLDER_ITEM_CAPABILITY.find(upgrading);
         if (emcHolder != null) {
             long max = emcHolder.getMaximumEmc(upgrading);
             if (charge >= max) {
@@ -354,7 +354,7 @@ public class BlockEntityCollector extends BlockEntityEMC implements IHasMatter, 
     private void checkFuelOrKlein() {
         ItemStack upgrading = getUpgrading();
         if (!upgrading.isEmpty()) {
-            IItemEmcHolder emcHolder = upgrading.getCapability(PECapabilities.EMC_HOLDER_ITEM_CAPABILITY);
+            IItemEmcHolder emcHolder = PECapabilities.EMC_HOLDER_ITEM_CAPABILITY.find(upgrading);
             if (emcHolder != null) {
                 if (emcHolder.getNeededEmc(upgrading) > 0) {
                     hasChargeableItem = true;

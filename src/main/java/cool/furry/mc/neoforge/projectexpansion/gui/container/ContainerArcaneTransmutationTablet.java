@@ -39,9 +39,9 @@ import net.minecraft.world.item.crafting.CraftingRecipe;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.item.crafting.RecipeType;
 import net.minecraft.world.level.Level;
-import net.neoforged.neoforge.capabilities.Capabilities;
-import net.neoforged.neoforge.items.ItemHandlerHelper;
-import net.neoforged.neoforge.network.PacketDistributor;
+import cool.furry.mc.neoforge.projectexpansion.platform.InventoryCapabilities;
+import moze_intel.projecte.api.item_handlers.ItemHandlerHelper;
+import moze_intel.projecte.network.PENetwork;
 
 import javax.annotation.Nullable;
 import java.math.BigInteger;
@@ -74,7 +74,7 @@ public class ContainerArcaneTransmutationTablet extends PEHandContainer {
     public boolean skipRefill = false;
 
     public static ContainerArcaneTransmutationTablet fromNetwork(int windowId, Inventory playerInv, FriendlyByteBuf buf) {
-        @Nullable IKnowledgeProvider provider = playerInv.player.getCapability(PECapabilities.KNOWLEDGE_CAPABILITY);
+        @Nullable IKnowledgeProvider provider = PECapabilities.KNOWLEDGE_CAPABILITY.find(playerInv.player);
         if (provider == null) throw new NullPointerException("provider is null");
         ContainerData data = ContainerData.decode(buf);
         return new ContainerArcaneTransmutationTablet(windowId, playerInv, provider, data.hand().orElse(null), data.selected());
@@ -236,7 +236,7 @@ public class ContainerArcaneTransmutationTablet extends PEHandContainer {
                         transmutationInventory.removeEmc(BigInteger.valueOf(itemEmc));
                     }
                     stack.setCount(1);
-                    ItemHandlerHelper.insertItemStacked(player.getCapability(Capabilities.ItemHandler.ENTITY), stack, false);
+                    ItemHandlerHelper.insertItemStacked(InventoryCapabilities.ItemHandler.ENTITY.find(player), stack, false);
                 } else if (itemsRoomFor > 1) {
                     BigInteger availableEMC = transmutationInventory.getAvailableEmc();
                     BigInteger emc = BigInteger.valueOf(itemEmc);
@@ -257,13 +257,13 @@ public class ContainerArcaneTransmutationTablet extends PEHandContainer {
                     }
                     //Set the stack size to what we found the max value is we have room for (capped at the stack's own max size)
                     stack.setCount(itemsRoomFor);
-                    ItemHandlerHelper.insertItemStacked(player.getCapability(Capabilities.ItemHandler.ENTITY), stack, false);
+                    ItemHandlerHelper.insertItemStacked(InventoryCapabilities.ItemHandler.ENTITY.find(player), stack, false);
                 }
             }
         } else if (slotIndex >= (OUTPUT + OUTPUT_COUNT) && slotIndex < CRAFTING) {
             ItemStack slotStack = currentSlot.getItem();
             ItemStack stackToInsert = slotStack;
-            if (stackToInsert.getCapability(PECapabilities.EMC_HOLDER_ITEM_CAPABILITY) != null) {
+            if (PECapabilities.EMC_HOLDER_ITEM_CAPABILITY.find(stackToInsert) != null) {
                 //We are in the main inventory or the hot bar and are handling an item that can store EMC
                 //Start by trying to insert it into the input slots, first attempting to stack with other items
                 stackToInsert = insertItem(inputSlots, stackToInsert, true);
@@ -292,7 +292,7 @@ public class ContainerArcaneTransmutationTablet extends PEHandContainer {
     @Override
     public void clickPostValidate(int slotIndex, int dragType, ClickType clickType, Player player) {
         if (player.level().isClientSide && transmutationInventory.getHandlerForSlot(slotIndex) == transmutationInventory.outputs && tryGetSlot(slotIndex) instanceof Slot slot) {
-            PacketDistributor.sendToServer(new SearchUpdatePKT(transmutationInventory.getIndexFromSlot(slotIndex), slot.getItem()));
+            PENetwork.sendToServer(new SearchUpdatePKT(transmutationInventory.getIndexFromSlot(slotIndex), slot.getItem()));
         }
         super.clickPostValidate(slotIndex, dragType, clickType, player);
     }
@@ -578,7 +578,7 @@ public class ContainerArcaneTransmutationTablet extends PEHandContainer {
 
     /** @apiNote only call on client */
     public void action(PacketArcaneTransmutationTabletSmallButton.Action action) {
-        PacketDistributor.sendToServer(new PacketArcaneTransmutationTabletSmallButton(action));
+        PENetwork.sendToServer(new PacketArcaneTransmutationTabletSmallButton(action));
     }
 
     public IKnowledgeProvider getProvider() {

@@ -1,6 +1,6 @@
 package cool.furry.mc.neoforge.projectexpansion.util;
 
-import net.neoforged.fml.ModList;
+import net.fabricmc.loader.api.FabricLoader;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
@@ -27,7 +27,7 @@ public record SearchSync(String modId, Consumer<String> action) {
     }
 
     public boolean isAvailable() {
-        return ModList.get().isLoaded(modId);
+        return FabricLoader.getInstance().isModLoaded(modId);
     }
 
     public void sync(String text) {

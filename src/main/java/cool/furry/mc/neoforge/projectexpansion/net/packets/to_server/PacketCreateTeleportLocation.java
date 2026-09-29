@@ -18,7 +18,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.neoforged.neoforge.network.handling.IPayloadContext;
+import moze_intel.projecte.network.PEPacketContext;
 
 public record PacketCreateTeleportLocation(String name, Player player, InteractionHand hand) implements IPacket {
     public static final CustomPacketPayload.Type<PacketCreateTeleportLocation> TYPE = new CustomPacketPayload.Type<>(Main.rl("create_teleport_location"));
@@ -30,7 +30,7 @@ public record PacketCreateTeleportLocation(String name, Player player, Interacti
     );
 
     @Override
-    public void handle(IPayloadContext context) {
+    public void handle(PEPacketContext context) {
         ItemStack stack = player.getItemInHand(hand);
         if(stack.getItem() instanceof ItemAlchemicalBook) {
             try {

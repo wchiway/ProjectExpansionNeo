@@ -7,7 +7,7 @@ import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.world.entity.player.Player;
-import net.neoforged.neoforge.network.handling.IPayloadContext;
+import moze_intel.projecte.network.PEPacketContext;
 
 public class ClearKnowledgePacket implements IPacket {
     public static final ClearKnowledgePacket INSTANCE = new ClearKnowledgePacket();
@@ -15,7 +15,7 @@ public class ClearKnowledgePacket implements IPacket {
     public static final StreamCodec<RegistryFriendlyByteBuf, ClearKnowledgePacket> STREAM_CODEC = StreamCodec.unit(INSTANCE);
 
     @Override
-    public void handle(IPayloadContext context) {
+    public void handle(PEPacketContext context) {
         Player player = context.player();
         if (player.containerMenu instanceof ContainerArcaneTransmutationTablet container) {
             container.transmutationInventory.updateClientTargets(false);

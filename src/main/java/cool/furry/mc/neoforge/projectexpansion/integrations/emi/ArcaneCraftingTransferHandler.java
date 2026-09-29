@@ -14,7 +14,7 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.CraftingRecipe;
-import net.neoforged.neoforge.network.PacketDistributor;
+import moze_intel.projecte.network.PENetwork;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -84,7 +84,7 @@ public class ArcaneCraftingTransferHandler implements StandardRecipeHandler<Cont
         }
 
         boolean transferAll = context.getDestination() == EmiCraftContext.Destination.INVENTORY;
-        PacketDistributor.sendToServer(new PacketArcaneTransmutationTabletRecipeTransfer(itemStacks, transferAll));
+        PENetwork.sendToServer(new PacketArcaneTransmutationTabletRecipeTransfer(itemStacks, transferAll));
         return true;
     }
 }

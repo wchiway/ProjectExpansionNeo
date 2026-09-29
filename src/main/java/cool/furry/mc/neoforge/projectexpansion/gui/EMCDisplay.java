@@ -14,21 +14,15 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.LayeredDraw;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.chat.Component;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.client.event.ClientPlayerNetworkEvent;
-import net.neoforged.neoforge.client.event.ClientTickEvent;
-import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
-import net.neoforged.neoforge.common.TranslatableEnum;
-import net.neoforged.neoforge.event.level.LevelEvent;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import cool.furry.mc.neoforge.projectexpansion.util.TranslatableEnum;
 
 import javax.annotation.Nullable;
 import java.math.BigInteger;
 
-@OnlyIn(Dist.CLIENT)
-@EventBusSubscriber(modid = Main.MOD_ID, bus = EventBusSubscriber.Bus.GAME, value = Dist.CLIENT)
+@Environment(EnvType.CLIENT)
+
 public class EMCDisplay {
     public static final Overlay INSTANCE = new Overlay();
     public static final int PADDING_X = 2;
@@ -43,14 +37,13 @@ public class EMCDisplay {
         return Minecraft.getInstance().player;
     }
 
-    @SubscribeEvent
-    public static void onTick(ClientTickEvent.Post event) {
-        if (Config.client.Spec.isLoaded() && !Config.client.emcDisplay.get()) return;
+    public static void onTick() {
+        if (!Config.client.Spec.isLoaded() || !Config.client.emcDisplay.get()) return;
         LocalPlayer player = getPlayer();
         tick++;
         if (player != null && tick >= 20) {
             tick = 0;
-            IKnowledgeProvider provider = player.getCapability(PECapabilities.KNOWLEDGE_CAPABILITY);
+            IKnowledgeProvider provider = PECapabilities.KNOWLEDGE_CAPABILITY.find(player);
             if (provider == null) {
                 ++repeatedFailures;
                 if (repeatedFailures < 10) {
@@ -69,33 +62,19 @@ public class EMCDisplay {
         }
     }
 
-    private static void reset() {
+    public static void reset() {
         emc = lastEMC = BigInteger.ZERO;
         tick = 0;
+        history[0] = history[1] = BigInteger.ZERO;
+        repeatedFailures = 0;
     }
 
-    @SubscribeEvent
-    public static void clientDisconnect(ClientPlayerNetworkEvent.LoggingOut event) {
-        if (!Config.client.emcDisplay.get()) return;
-        reset();
-    }
-
-    @SubscribeEvent
-    public static void onWorldUnload(LevelEvent.Unload event) {
-        if (!Config.client.emcDisplay.get()) return;
-        reset();
-    }
-
-    @EventBusSubscriber(modid = Main.MOD_ID, bus = EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
     public static class Overlay implements LayeredDraw.Layer {
-        @SubscribeEvent
-        public static void onRegisterLayers(RegisterGuiLayersEvent event) {
-            event.registerAboveAll(Main.rl("emc_display"), INSTANCE);
-        }
+
 
         @Override
         public void render(GuiGraphics guiGraphics, DeltaTracker deltaTracker) {
-            if (Config.client.Spec.isLoaded() && !Config.client.emcDisplay.get()) return;
+            if (!Config.client.Spec.isLoaded() || !Config.client.emcDisplay.get()) return;
             Minecraft mc = Minecraft.getInstance();
             BigInteger avg = history[0].add(history[1]);
             String str = EMCFormat.format(emc);

@@ -4,14 +4,14 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.world.InteractionHand;
-import net.neoforged.neoforge.network.codec.NeoForgeStreamCodecs;
+import cool.furry.mc.neoforge.projectexpansion.net.StreamCodecs;
 
 import java.util.Optional;
 
 public record ContainerData(boolean inHand, Optional<InteractionHand> hand, int selected) {
     public static StreamCodec<FriendlyByteBuf, ContainerData> STREAM_CODEC = StreamCodec.composite(
             ByteBufCodecs.BOOL, ContainerData::inHand,
-            ByteBufCodecs.optional(NeoForgeStreamCodecs.enumCodec(InteractionHand.class)), ContainerData::hand,
+            ByteBufCodecs.optional(StreamCodecs.enumCodec(InteractionHand.class)), ContainerData::hand,
             ByteBufCodecs.INT, ContainerData::selected,
             ContainerData::new
     );

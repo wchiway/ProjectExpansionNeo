@@ -5,16 +5,16 @@ import cool.furry.mc.neoforge.projectexpansion.util.*;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.ItemStack;
-import net.neoforged.neoforge.registries.DeferredHolder;
-import net.neoforged.neoforge.registries.DeferredRegister;
+import moze_intel.projecte.gameObjs.registration.PEDeferredHolder;
+import moze_intel.projecte.gameObjs.registration.PEDeferredRegister;
 
 import java.util.Objects;
 
 @SuppressWarnings("unused")
 public class CreativeTabs {
-    public static final DeferredRegister<CreativeModeTab> Registry = DeferredRegister.create(Registries.CREATIVE_MODE_TAB, Main.MOD_ID);
-    public static final DeferredHolder<CreativeModeTab, CreativeModeTab> MAIN = Registry.register(Main.MOD_ID, () ->
-            CreativeModeTab.builder()
+    public static final PEDeferredRegister<CreativeModeTab> Registry = PEDeferredRegister.create(Registries.CREATIVE_MODE_TAB, Main.MOD_ID);
+    public static final PEDeferredHolder<CreativeModeTab, CreativeModeTab> MAIN = Registry.register(Main.MOD_ID, () ->
+            net.fabricmc.fabric.api.itemgroup.v1.FabricItemGroup.builder()
                     .icon(() -> new ItemStack(Objects.requireNonNull(Items.FINAL_STAR.get())))
                     .title(Lang.ITEMGROUP.translate())
                     .displayItems((displayParameters, output) -> {

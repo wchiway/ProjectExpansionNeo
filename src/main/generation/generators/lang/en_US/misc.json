@@ -1,5 +1,5 @@
 {
-  "itemGroup.projectexpansion": "Project Expansion",
+  "itemGroup.projectexpansion": "ProjectExpansionNeo",
   "enchantment.projectexpansion.alchemical_collection": "Alchemical Collection",
   "enchantment.projectexpansion.alchemical_collection.desc": "Converts any mined items with an emc value directly into emc.",
   "text.projectexpansion.wip": "WIP!",
@@ -40,5 +40,6 @@
   "config.jade.plugin_projectexpansion.provider": "Project Expansion Provider",
   "attribute.projectexpansion.sun_exposure_protection": "Sun Exposure Protection",
   "curios.identifier.transmutation_tablet": "Transmutation Tablet",
-  "key.projecte.curios.open_transmutation_tablet": "Open Transmutation Tablet"
+  "key.projecte.curios.open_transmutation_tablet": "Open Transmutation Tablet",
+  "trinkets.slot.chest.transmutation_tablet": "Transmutation Tablet"
 }

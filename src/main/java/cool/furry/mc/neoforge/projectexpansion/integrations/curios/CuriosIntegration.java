@@ -1,33 +1,30 @@
 package cool.furry.mc.neoforge.projectexpansion.integrations.curios;
 
-import net.minecraft.world.entity.player.Player;
-import net.neoforged.fml.ModList;
-import net.neoforged.neoforge.items.IItemHandlerModifiable;
-import top.theillusivec4.curios.api.CuriosApi;
-import top.theillusivec4.curios.api.type.capability.ICuriosItemHandler;
-import top.theillusivec4.curios.api.type.inventory.ICurioStacksHandler;
-
+import java.util.ArrayList;
 import java.util.Optional;
+import moze_intel.projecte.api.item_handlers.IItemHandlerModifiable;
+import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.world.entity.player.Player;
 
-public class CuriosIntegration {
-    public static final String MOD_ID = "curios";
+/** Access to the dedicated tablet slot on Fabric. */
+public final class CuriosIntegration {
+    public static final String MOD_ID = "trinkets";
     public static final String TABLET_SLOT_ID = "transmutation_tablet";
-
-    public static boolean modLoaded() {
-        return ModList.get().isLoaded(MOD_ID);
-    }
-
+    public static boolean modLoaded() { return FabricLoader.getInstance().isModLoaded(MOD_ID); }
     public static Optional<IItemHandlerModifiable> getCuriosInventory(Player player) {
-        if (modLoaded()) return Integrator.getCuriosInventory(player);
-        return Optional.empty();
+        return modLoaded() ? Integrator.inventory(player) : Optional.empty();
     }
-
     private static final class Integrator {
-        private static Optional<IItemHandlerModifiable> getCuriosInventory(Player player) {
-            Optional<ICuriosItemHandler> curiosItemHandler = CuriosApi.getCuriosInventory(player);
-            if (curiosItemHandler.isEmpty())  return Optional.empty();
-            Optional<ICurioStacksHandler> itemHandler = curiosItemHandler.get().getStacksHandler(TABLET_SLOT_ID);
-            return itemHandler.map(ICurioStacksHandler::getStacks);
+        static Optional<IItemHandlerModifiable> inventory(Player player) {
+            return dev.emi.trinkets.api.TrinketsApi.getTrinketComponent(player).flatMap(component -> {
+                var inventories = new ArrayList<dev.emi.trinkets.api.TrinketInventory>();
+                for (var group : component.getInventory().values()) {
+                    var inventory = group.get(TABLET_SLOT_ID);
+                    if (inventory != null) inventories.add(inventory);
+                }
+                return inventories.isEmpty() ? Optional.empty()
+                    : Optional.of(new moze_intel.projecte.integration.trinkets.TrinketItemHandler(inventories));
+            });
         }
     }
 }

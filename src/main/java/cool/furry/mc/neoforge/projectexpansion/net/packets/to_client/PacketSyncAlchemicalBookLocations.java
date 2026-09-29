@@ -8,7 +8,7 @@ import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.neoforged.neoforge.network.handling.IPayloadContext;
+import moze_intel.projecte.network.PEPacketContext;
 
 import java.util.List;
 
@@ -21,7 +21,7 @@ public record PacketSyncAlchemicalBookLocations(List<CapabilityAlchemicalBookLoc
     );
 
     @Override
-    public void handle(IPayloadContext context) {
+    public void handle(PEPacketContext context) {
         ClientSideHandler.handleSyncAlchemicalBookLocations(this);
     }
 

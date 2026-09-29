@@ -14,7 +14,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 // This mixin makes it so only enchanted books keep their enchantments
 @Mixin(value = EnchantmentProcessor.class,remap = false)
 public class EnchantmentProcessorMixin {
-    @Inject(at = @At("HEAD"), method = "shouldPersist(Lmoze_intel/projecte/api/ItemInfo;Lnet/minecraft/world/item/enchantment/ItemEnchantments;)Z", cancellable = true)
+    @Inject(at = @At("HEAD"), method = "shouldPersist", cancellable = true)
     public void shouldPersist(ItemInfo info, ItemEnchantments component, CallbackInfoReturnable<Boolean> cir) {
         if(Config.server.persistEnchantedBooksOnly.get() && !info.getItem().is(BuiltInRegistries.ITEM.getKey(Items.ENCHANTED_BOOK))) {
             cir.setReturnValue(false);

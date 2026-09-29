@@ -125,7 +125,7 @@ public class CommandBook {
                 provider = CapabilityAlchemicalBookLocations.fromItemStack(stack);
                 if(stack.getItem() instanceof ItemAlchemicalBook book && book.getMode(stack) == ItemAlchemicalBook.Mode.PLAYER) {
                     Player player = book.getPlayer(target.itemStackOrException());
-                    Component playerDisplay = player == null ? Component.literal(Objects.requireNonNull(target.itemStackOrException().get(DataComponentTypes.OWNER)).name()).withStyle(ChatFormatting.DARK_AQUA) : player.getDisplayName().copy().withStyle(ChatFormatting.DARK_AQUA);
+                    Component playerDisplay = player == null ? Component.literal(Objects.requireNonNull(target.itemStackOrException().get(DataComponentTypes.OWNER.get())).name()).withStyle(ChatFormatting.DARK_AQUA) : player.getDisplayName().copy().withStyle(ChatFormatting.DARK_AQUA);
                     String commandString = String.format("/%s book player %s %s", CommandRegistry.COMMAND_BASE, playerDisplay.getString(), commandSource);
                     Component command = Component.literal(commandString).withStyle(style -> style.withClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, commandString)).withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.literal(commandString))).withColor(ChatFormatting.RED).withUnderlined(true));
                     ctx.getSource().sendSystemMessage(Lang.Commands.BOOK_BOUND_TO_PLAYER.extendColored(commandSource, ChatFormatting.RED, playerDisplay, command));

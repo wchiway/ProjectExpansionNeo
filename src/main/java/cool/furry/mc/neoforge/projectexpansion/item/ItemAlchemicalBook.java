@@ -20,10 +20,10 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Rarity;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.level.Level;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
-import net.neoforged.neoforge.network.PacketDistributor;
-import net.neoforged.neoforge.network.codec.NeoForgeStreamCodecs;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import moze_intel.projecte.network.PENetwork;
+import cool.furry.mc.neoforge.projectexpansion.net.StreamCodecs;
 
 import javax.annotation.Nullable;
 import java.util.List;
@@ -35,7 +35,7 @@ public class ItemAlchemicalBook extends Item {
         this.tier = tier;
     }
 
-    @OnlyIn(Dist.CLIENT)
+    @Environment(EnvType.CLIENT)
     @Override
     public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> list, TooltipFlag tooltipFlag) {
         super.appendHoverText(stack, context, list, tooltipFlag);
@@ -75,10 +75,10 @@ public class ItemAlchemicalBook extends Item {
         PLAYER,
         STACK;
 
-        public static final StreamCodec<FriendlyByteBuf, Mode> STREAM_CODEC = NeoForgeStreamCodecs.enumCodec(Mode.class);
+        public static final StreamCodec<FriendlyByteBuf, Mode> STREAM_CODEC = StreamCodecs.enumCodec(Mode.class);
     }
     public Mode getMode(ItemStack stack) {
-        return stack.has(DataComponentTypes.OWNER) ? Mode.PLAYER : Mode.STACK;
+        return stack.has(DataComponentTypes.OWNER.get()) ? Mode.PLAYER : Mode.STACK;
     }
 
     public enum Tier {
@@ -143,23 +143,23 @@ public class ItemAlchemicalBook extends Item {
         ItemStack stack = player.getItemInHand(hand);
         if(!level.isClientSide) {
             if(player.isCrouching() && getTier().canBindToPlayer()) {
-                DataComponentTypes.OwnerData data = stack.get(DataComponentTypes.OWNER);
+                DataComponentTypes.OwnerData data = stack.get(DataComponentTypes.OWNER.get());
                 if (getMode(stack) == Mode.PLAYER && data != null) {
                     if(!data.uuid().equals(player.getUUID())) {
                         player.sendSystemMessage(Lang.NOT_OWNER.translateColored(ChatFormatting.RED, Component.literal(data.name()).withStyle(ChatFormatting.DARK_AQUA)));
                         return InteractionResultHolder.fail(stack);
                     } else {
-                        stack.remove(DataComponentTypes.OWNER);
+                        stack.remove(DataComponentTypes.OWNER.get());
                         player.sendSystemMessage(Lang.Items.ALCHEMICAL_BOOK_NO_LONGER_BOUND.translateColored(ChatFormatting.GREEN, data.name()));
                     }
                 } else {
                     data = new DataComponentTypes.OwnerData(player.getUUID(), player.getName().getString());
-                    stack.set(DataComponentTypes.OWNER, data);
+                    stack.set(DataComponentTypes.OWNER.get(), data);
                     player.sendSystemMessage(Lang.Items.ALCHEMICAL_BOOK_NOW_BOUND.translateColored(ChatFormatting.GREEN, data.name()));
                 }
             } else {
                 try {
-                    PacketDistributor.sendToPlayer((ServerPlayer) player, new PacketOpenAlchemicalBookGUI(hand, CapabilityAlchemicalBookLocations.from(stack).getLocations(), getMode(stack), canEdit(stack, (ServerPlayer) player)));
+                    PENetwork.sendToPlayer((ServerPlayer) player, new PacketOpenAlchemicalBookGUI(hand, CapabilityAlchemicalBookLocations.from(stack).getLocations(), getMode(stack), canEdit(stack, (ServerPlayer) player)));
                 } catch (CapabilityAlchemicalBookLocations.BookError.OwnerOfflineError ignore) {
                     player.sendSystemMessage(Lang.Items.ALCHEMICAL_BOOK_OWNER_NOT_ONLINE.translateColored(ChatFormatting.RED));
                     return InteractionResultHolder.fail(stack);
@@ -187,6 +187,6 @@ public class ItemAlchemicalBook extends Item {
 
     @Override
     public boolean isFoil(ItemStack stack) {
-        return stack.has(DataComponentTypes.OWNER);
+        return stack.has(DataComponentTypes.OWNER.get());
     }
 }

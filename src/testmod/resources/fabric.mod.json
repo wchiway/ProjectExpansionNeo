@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "id": "projectexpansion_test",
+  "version": "1.0.0",
+  "name": "Project Expansion integration tests",
+  "environment": "*",
+  "entrypoints": {
+    "client": ["cool.furry.mc.neoforge.projectexpansion.test.ClientSmokeTest"],
+    "fabric-gametest": ["cool.furry.mc.neoforge.projectexpansion.test.ExpansionGameTests"]
+  },
+  "depends": {"projectexpansion": "*", "fabric-gametest-api-v1": "*"}
+}

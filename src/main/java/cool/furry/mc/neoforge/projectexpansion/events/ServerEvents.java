@@ -15,28 +15,25 @@ import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.event.tick.ServerTickEvent;
+import net.minecraft.server.MinecraftServer;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 
-@EventBusSubscriber(modid = Main.MOD_ID)
 public class ServerEvents {
     static final ArrayList<SunExposureTimer> timers = new ArrayList<>();
+    public static void clear() { timers.clear(); }
 
-    @SubscribeEvent
-    public static void onServerTick(ServerTickEvent.Post event) {
-        for (ServerPlayer player: event.getServer().getPlayerList().getPlayers()) {
+    public static void onServerTick(MinecraftServer server) {
+        for (ServerPlayer player: server.getPlayerList().getPlayers()) {
             if (player.isCreative() || player.gameMode.getGameModeForPlayer().equals(GameType.SPECTATOR)) continue;
-            handleSunExposure(event, player);
-            handleWeighedDown(event, player);
+            handleSunExposure(server, player);
+            handleWeighedDown(server, player);
         }
     }
 
-    private static void handleWeighedDown(@SuppressWarnings("unused") ServerTickEvent.Post event, ServerPlayer player) {
+    private static void handleWeighedDown(@SuppressWarnings("unused") MinecraftServer server, ServerPlayer player) {
         int protectionAmount = SunExposureHelper.getProtectionAmount(player);
         int protectionLevel = SunExposureHelper.getProtectionLevel(player);
 
@@ -68,11 +65,11 @@ public class ServerEvents {
         return time;
     }
 
-    private static void handleSunExposure(ServerTickEvent.Post event, ServerPlayer player) {
+    private static void handleSunExposure(MinecraftServer server, ServerPlayer player) {
         int protectionAmount = SunExposureHelper.getProtectionAmount(player);
         Set<SunExposureTimer> toRemove = new HashSet<>();
         HitResult result = player.pick(10.0f, 0.0f, false);
-        DamageSources damage = DamageSources.fromServer(event.getServer());
+        DamageSources damage = DamageSources.fromServer(server);
         if(result instanceof BlockHitResult hit) {
             Block block = player.level().getBlockState(hit.getBlockPos()).getBlock();
             if (block instanceof BlockCompactSun) {
@@ -88,7 +85,7 @@ public class ServerEvents {
                             // deal 40% of the player's max health (4 hearts for 20) in damage every 15 ticks
                             player.hurt(damage.stareAtSun(), playerMaxHealth * 0.4f);
                         }
-                        AdvancementHolder advancement = event.getServer().getAdvancements().get(Advancements.BLINDED_BY_THE_LIGHT);
+                        AdvancementHolder advancement = server.getAdvancements().get(Advancements.BLINDED_BY_THE_LIGHT);
                         if (advancement != null) {
                             player.getAdvancements().award(advancement, "blinded_by_the_light");
                         }

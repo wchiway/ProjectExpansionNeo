@@ -21,9 +21,9 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemStack;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
-import net.neoforged.neoforge.network.PacketDistributor;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import moze_intel.projecte.network.PENetwork;
 import org.apache.commons.lang3.StringUtils;
 
 import javax.annotation.Nullable;
@@ -33,7 +33,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
-@OnlyIn(Dist.CLIENT)
+@Environment(EnvType.CLIENT)
 public class GUIAlchemicalBook extends Screen {
     private final List<CapabilityAlchemicalBookLocations.TeleportLocation> locations = new ArrayList<>();
     private @Nullable CapabilityAlchemicalBookLocations.TeleportLocation backLocation = null;
@@ -64,7 +64,7 @@ public class GUIAlchemicalBook extends Screen {
 
     private IKnowledgeProvider getKnowledgeCapability() {
         if(knowledgeProvider == null) {
-            IKnowledgeProvider provider = player.getCapability(PECapabilities.KNOWLEDGE_CAPABILITY);
+            IKnowledgeProvider provider = PECapabilities.KNOWLEDGE_CAPABILITY.find(player);
             if (provider == null) {
                 throw new IllegalStateException("Player does not have knowledge capability");
             }
@@ -217,14 +217,14 @@ public class GUIAlchemicalBook extends Screen {
 
     private class ButtonClose extends Button {
         public ButtonClose(int x, int y) {
-            super(Button.builder(Lang.GUI.ALCHEMICAL_BOOK_CLOSE.translate(), (button) -> player.closeContainer()).pos(x, y).size(40, 20));
+            super(x, y, 40, 20, Lang.GUI.ALCHEMICAL_BOOK_CLOSE.translate(), (button) -> player.closeContainer(), Button.DEFAULT_NARRATION);
         }
     }
 
     private class ButtonCreate extends Button {
         String name;
         public ButtonCreate(int x, int y, int w, int h) {
-            super(Button.builder(Lang.GUI.ALCHEMICAL_BOOK_CREATE.translate(), (button) -> {}).pos(x, y).size(w, h));
+            super(x, y, w, h, Lang.GUI.ALCHEMICAL_BOOK_CREATE.translate(), (button) -> {}, Button.DEFAULT_NARRATION);
         }
 
         @Override
@@ -232,7 +232,7 @@ public class GUIAlchemicalBook extends Screen {
             if (name == null) {
                 return;
             }
-            PacketDistributor.sendToServer(new PacketCreateTeleportLocation(name, player, hand));
+            PENetwork.sendToServer(new PacketCreateTeleportLocation(name, player, hand));
         }
 
         private void setName(String name) {
@@ -242,7 +242,7 @@ public class GUIAlchemicalBook extends Screen {
 
     private class ButtonDelete extends Button {
         public ButtonDelete(int x, int y, int w, int h, String name) {
-            super(Button.builder(Component.literal("X"), (button) -> PacketDistributor.sendToServer(new PacketDeleteTeleportLocation(name, player, hand))).pos(x, y).size(w, h));
+            super(x, y, w, h, Component.literal("X"), (button) -> PENetwork.sendToServer(new PacketDeleteTeleportLocation(name, player, hand)), Button.DEFAULT_NARRATION);
         }
     }
 
@@ -251,10 +251,10 @@ public class GUIAlchemicalBook extends Screen {
         final boolean canTeleport;
         final boolean hasEnoughEMC;
         public ButtonTeleport(int x, int y, int w, int h, CapabilityAlchemicalBookLocations.TeleportLocation location) {
-            super(Button.builder(Component.literal(location.name()), (button) -> {
-                PacketDistributor.sendToServer(new PacketTeleportToLocation(location.name(), player, hand));
+            super(x, y, w, h, Component.literal(location.name()), (button) -> {
+                PENetwork.sendToServer(new PacketTeleportToLocation(location.name(), player, hand));
                 player.closeContainer();
-            }).pos(x, y).size(w, h));
+            }, Button.DEFAULT_NARRATION);
             this.location = location;
             this.hasEnoughEMC = GUIAlchemicalBook.this.canTeleport(location);
             this.canTeleport = acrossDimensions || location.dimension().equals(player.level().dimension());
@@ -274,7 +274,7 @@ public class GUIAlchemicalBook extends Screen {
         private @Nullable CapabilityAlchemicalBookLocations.TeleportLocation location;
         private boolean canTeleport;
         public ButtonBack(int x, int y, int w, int h) {
-            super(Button.builder(Lang.GUI.ALCHEMICAL_BOOK_BACK.translate(), (button) -> PacketDistributor.sendToServer(new PacketTeleportBack(player, hand))).pos(x, y).size(w, h));
+            super(x, y, w, h, Lang.GUI.ALCHEMICAL_BOOK_BACK.translate(), (button) -> PENetwork.sendToServer(new PacketTeleportBack(player, hand)), Button.DEFAULT_NARRATION);
         }
 
         @Override
@@ -305,14 +305,14 @@ public class GUIAlchemicalBook extends Screen {
 
     private class ButtonPrev extends Button {
         public ButtonPrev(int x, int y, int w, int h, boolean active) {
-            super(Button.builder(Lang.PREVIOUS.translate(), (button) -> GUIAlchemicalBook.this.previousPage()).pos(x, y).size(w, h));
+            super(x, y, w, h, Lang.PREVIOUS.translate(), (button) -> GUIAlchemicalBook.this.previousPage(), Button.DEFAULT_NARRATION);
             this.active = active;
         }
     }
 
     private class ButtonNext extends Button {
         public ButtonNext(int x, int y, int w, int h, boolean active) {
-            super(Button.builder(Lang.NEXT.translate(), (button) -> GUIAlchemicalBook.this.nextPage()).pos(x, y).size(w, h));
+            super(x, y, w, h, Lang.NEXT.translate(), (button) -> GUIAlchemicalBook.this.nextPage(), Button.DEFAULT_NARRATION);
             this.active = active;
         }
     }

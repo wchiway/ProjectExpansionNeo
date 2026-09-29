@@ -25,8 +25,8 @@ import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.MapColor;
 import net.minecraft.world.level.material.PushReaction;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 
 import javax.annotation.Nullable;
 import java.util.List;
@@ -35,7 +35,7 @@ public class BlockRelay extends Block implements IHasMatter, EntityBlock, IMatte
     private final Matter matter;
 
     public BlockRelay(BlockBehaviour.Properties properties, Matter matter) {
-        super(properties);
+        super(properties.pushReaction(PushReaction.BLOCK).mapColor(matter.mapColor == null ? MapColor.NONE : matter.mapColor.get()));
         this.matter = matter;
     }
 
@@ -76,7 +76,7 @@ public class BlockRelay extends Block implements IHasMatter, EntityBlock, IMatte
         return new BlockEntityRelay(pos, state);
     }
 
-    @OnlyIn(Dist.CLIENT)
+    @Environment(EnvType.CLIENT)
     @Override
     public void appendHoverText(ItemStack stack, Item.TooltipContext context, List<Component> list, TooltipFlag tooltipFlag) {
         super.appendHoverText(stack, context, list, tooltipFlag);
@@ -91,16 +91,6 @@ public class BlockRelay extends Block implements IHasMatter, EntityBlock, IMatte
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
         if (type == BlockEntityTypes.RELAY.get() && !level.isClientSide) return BlockEntityRelay::tickServer;
         return null;
-    }
-
-    @Override
-    public PushReaction getPistonPushReaction(BlockState state) {
-        return PushReaction.BLOCK;
-    }
-
-    @Override
-    public MapColor getMapColor(BlockState state, BlockGetter level, BlockPos pos, MapColor defaultColor) {
-        return matter.mapColor == null ? super.getMapColor(state, level, pos, defaultColor) : matter.mapColor.get();
     }
 
     @Override

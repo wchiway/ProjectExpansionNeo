@@ -1,41 +1,45 @@
 package cool.furry.mc.neoforge.projectexpansion.net;
-
 import cool.furry.mc.neoforge.projectexpansion.net.packets.IPacket;
 import cool.furry.mc.neoforge.projectexpansion.net.packets.to_client.*;
 import cool.furry.mc.neoforge.projectexpansion.net.packets.to_server.*;
-import net.neoforged.bus.api.IEventBus;
-import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
-import net.neoforged.neoforge.network.registration.PayloadRegistrar;
-import org.apache.maven.artifact.versioning.ArtifactVersion;
-
-// based on ProjectE's PacketHandler
-// https://github.com/sinkillerj/ProjectE/blob/d90e367b058ade5631b709e5feb7d3eacedb6350/src/main/java/moze_intel/projecte/network/PacketHandler.java
-@SuppressWarnings("unused")
+import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 public final class PacketHandler {
-
-    public PacketHandler(IEventBus modEventBus, ArtifactVersion version) {
-        modEventBus.addListener(RegisterPayloadHandlersEvent.class, event -> {
-            PayloadRegistrar registrar = event.registrar(version.toString());
-            register(registrar);
-        });
+    public PacketHandler() {
+        server(PacketArcaneTransmutationTabletRecipeTransfer.TYPE, PacketArcaneTransmutationTabletRecipeTransfer.STREAM_CODEC);
+        server(PacketArcaneTransmutationTabletSmallButton.TYPE, PacketArcaneTransmutationTabletSmallButton.STREAM_CODEC);
+        server(PacketCreateTeleportLocation.TYPE, PacketCreateTeleportLocation.STREAM_CODEC);
+        server(PacketDeleteTeleportLocation.TYPE, PacketDeleteTeleportLocation.STREAM_CODEC);
+        server(PacketOpenTransmutationTablet.TYPE, PacketOpenTransmutationTablet.STREAM_CODEC);
+        server(PacketTeleportBack.TYPE, PacketTeleportBack.STREAM_CODEC);
+        server(PacketTeleportToLocation.TYPE, PacketTeleportToLocation.STREAM_CODEC);
+        PayloadTypeRegistry.playS2C().register(ClearKnowledgePacket.TYPE, ClearKnowledgePacket.STREAM_CODEC);
+        PayloadTypeRegistry.playS2C().register(PacketOpenAlchemicalBookGUI.TYPE, PacketOpenAlchemicalBookGUI.STREAM_CODEC);
+        PayloadTypeRegistry.playS2C().register(PacketSyncAlchemicalBookLocations.TYPE, PacketSyncAlchemicalBookLocations.STREAM_CODEC);
+        PayloadTypeRegistry.playS2C().register(PacketUpdateCondenserLock.TYPE, PacketUpdateCondenserLock.STREAM_CODEC);
+        PayloadTypeRegistry.playS2C().register(PacketUpdateWindowLong.TYPE, PacketUpdateWindowLong.STREAM_CODEC);
+        PayloadTypeRegistry.playS2C().register(PacketUpdateWindowInt.TYPE, PacketUpdateWindowInt.STREAM_CODEC);
+        PayloadTypeRegistry.playS2C().register(PacketUpdateWindowBigInteger.TYPE, PacketUpdateWindowBigInteger.STREAM_CODEC);
+        PayloadTypeRegistry.playS2C().register(UpdateTransmutationTargetsPacket.TYPE, UpdateTransmutationTargetsPacket.STREAM_CODEC);
     }
-
-    public void register(PayloadRegistrar registrar) {
-        registrar.playToServer(PacketArcaneTransmutationTabletRecipeTransfer.TYPE, PacketArcaneTransmutationTabletRecipeTransfer.STREAM_CODEC, IPacket::handle);
-        registrar.playToServer(PacketArcaneTransmutationTabletSmallButton.TYPE, PacketArcaneTransmutationTabletSmallButton.STREAM_CODEC, IPacket::handle);
-        registrar.playToServer(PacketCreateTeleportLocation.TYPE, PacketCreateTeleportLocation.STREAM_CODEC, IPacket::handle);
-        registrar.playToServer(PacketDeleteTeleportLocation.TYPE, PacketDeleteTeleportLocation.STREAM_CODEC, IPacket::handle);
-        registrar.playToServer(PacketOpenTransmutationTablet.TYPE, PacketOpenTransmutationTablet.STREAM_CODEC, IPacket::handle);
-        registrar.playToServer(PacketTeleportBack.TYPE, PacketTeleportBack.STREAM_CODEC, IPacket::handle);
-        registrar.playToServer(PacketTeleportToLocation.TYPE, PacketTeleportToLocation.STREAM_CODEC, IPacket::handle);
-        registrar.playToClient(ClearKnowledgePacket.TYPE, ClearKnowledgePacket.STREAM_CODEC, IPacket::handle);
-        registrar.playToClient(PacketOpenAlchemicalBookGUI.TYPE, PacketOpenAlchemicalBookGUI.STREAM_CODEC, IPacket::handle);
-        registrar.playToClient(PacketSyncAlchemicalBookLocations.TYPE, PacketSyncAlchemicalBookLocations.STREAM_CODEC, IPacket::handle);
-        registrar.playToClient(PacketUpdateCondenserLock.TYPE, PacketUpdateCondenserLock.STREAM_CODEC, IPacket::handle);
-        registrar.playToClient(PacketUpdateWindowLong.TYPE, PacketUpdateWindowLong.STREAM_CODEC, IPacket::handle);
-        registrar.playToClient(PacketUpdateWindowInt.TYPE, PacketUpdateWindowInt.STREAM_CODEC, IPacket::handle);
-        registrar.playToClient(PacketUpdateWindowBigInteger.TYPE, PacketUpdateWindowBigInteger.STREAM_CODEC, IPacket::handle);
-        registrar.playToClient(UpdateTransmutationTargetsPacket.TYPE, UpdateTransmutationTargetsPacket.STREAM_CODEC, IPacket::handle);
+    private static <T extends IPacket> void server(CustomPacketPayload.Type<T> type, StreamCodec<? super RegistryFriendlyByteBuf, T> codec) {
+        PayloadTypeRegistry.playC2S().register(type, codec);
+        ServerPlayNetworking.registerGlobalReceiver(type, (payload, context) -> payload.handle(context::player));
     }
-
+    public static void registerClientReceivers() { ClientReceivers.register(); }
+    private static final class ClientReceivers {
+        static void register() {
+            net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking.registerGlobalReceiver(ClearKnowledgePacket.TYPE, (payload, context) -> payload.handle(context::player));
+            net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking.registerGlobalReceiver(PacketOpenAlchemicalBookGUI.TYPE, (payload, context) -> payload.handle(context::player));
+            net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking.registerGlobalReceiver(PacketSyncAlchemicalBookLocations.TYPE, (payload, context) -> payload.handle(context::player));
+            net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking.registerGlobalReceiver(PacketUpdateCondenserLock.TYPE, (payload, context) -> payload.handle(context::player));
+            net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking.registerGlobalReceiver(PacketUpdateWindowLong.TYPE, (payload, context) -> payload.handle(context::player));
+            net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking.registerGlobalReceiver(PacketUpdateWindowInt.TYPE, (payload, context) -> payload.handle(context::player));
+            net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking.registerGlobalReceiver(PacketUpdateWindowBigInteger.TYPE, (payload, context) -> payload.handle(context::player));
+            net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking.registerGlobalReceiver(UpdateTransmutationTargetsPacket.TYPE, (payload, context) -> payload.handle(context::player));
+        }
+    }
 }

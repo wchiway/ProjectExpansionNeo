@@ -32,8 +32,8 @@ import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.material.MapColor;
 import net.minecraft.world.level.material.PushReaction;
 import net.minecraft.world.phys.BlockHitResult;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 
 import javax.annotation.Nullable;
 import java.util.List;
@@ -42,7 +42,7 @@ public class BlockEMCLink extends Block implements IHasMatter, EntityBlock, IMat
     private final Matter matter;
 
     public BlockEMCLink(BlockBehaviour.Properties properties, Matter matter) {
-        super(properties);
+        super(properties.pushReaction(PushReaction.BLOCK).mapColor(matter.mapColor == null ? MapColor.NONE : matter.mapColor.get()));
         this.matter = matter;
         this.registerDefaultState(this.stateDefinition.any().setValue(BlockEntityNBTFilterable.FILTER, true));
     }
@@ -83,7 +83,7 @@ public class BlockEMCLink extends Block implements IHasMatter, EntityBlock, IMat
         return new BlockEntityEMCLink(pos, state);
     }
 
-    @OnlyIn(Dist.CLIENT)
+    @Environment(EnvType.CLIENT)
     @Override
     public void appendHoverText(ItemStack stack, Item.TooltipContext context, List<Component> list, TooltipFlag tooltipFlag) {
         super.appendHoverText(stack, context, list, tooltipFlag);
@@ -122,16 +122,6 @@ public class BlockEMCLink extends Block implements IHasMatter, EntityBlock, IMat
     public <T extends BlockEntity> BlockEntityTicker<T> getTicker(Level level, BlockState state, BlockEntityType<T> type) {
         if (type == BlockEntityTypes.EMC_LINK.get() && !level.isClientSide) return BlockEntityEMCLink::tickServer;
         return null;
-    }
-
-    @Override
-    public PushReaction getPistonPushReaction(BlockState state) {
-        return PushReaction.BLOCK;
-    }
-
-    @Override
-    public MapColor getMapColor(BlockState state, BlockGetter level, BlockPos pos, MapColor defaultColor) {
-        return matter.mapColor == null ? super.getMapColor(state, level, pos, defaultColor) : matter.mapColor.get();
     }
 
     @Override

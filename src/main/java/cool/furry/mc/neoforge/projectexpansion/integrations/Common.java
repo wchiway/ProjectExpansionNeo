@@ -40,8 +40,8 @@ public class Common {
         BlockEntity blockEntity = provider.getBlockEntity();
         Direction side = provider.getSide();
         BlockState state = provider.getBlockState();
-        @Nullable IEmcStorage emcStorage = WorldHelper.getCapability(level, PECapabilities.EMC_STORAGE_CAPABILITY, pos, state, blockEntity, side);
-        @Nullable IEmcStorageBigInteger bigEmcStorage = WorldHelper.getCapability(level, Capabilities.BIG_EMC_STORAGE_CAPABILITY, pos, state, blockEntity, side);
+        @Nullable IEmcStorage emcStorage = WorldHelper.getCapability(level, PECapabilities.EMC_STORAGE_CAPABILITY.lookup(), pos, state, blockEntity, side);
+        @Nullable IEmcStorageBigInteger bigEmcStorage = WorldHelper.getCapability(level, Capabilities.BIG_EMC_STORAGE_CAPABILITY.lookup(), pos, state, blockEntity, side);
         if (bigEmcStorage != null) {
             BigInteger total = bigEmcStorage.getStoredEmcBigInteger();
             BigInteger maximum = bigEmcStorage.getMaximumEmcBigInteger();
@@ -77,7 +77,7 @@ public class Common {
             addTooltip.accept(Lang.EMC_IMPORT_LIMIT.translateColored(ChatFormatting.GRAY, formatEMC(link.remainingEMC), formatEMC(emcLimit)));
             addTooltip.accept(Lang.ITEM_EXPORT_LIMIT.translateColored(ChatFormatting.GRAY, formatEMC(BigInteger.valueOf(link.remainingExport)), formatEMC(BigInteger.valueOf(importExportLimit))));
             addTooltip.accept(Lang.ITEM_IMPORT_LIMIT.translateColored(ChatFormatting.GRAY, formatEMC(BigInteger.valueOf(link.remainingImport)), formatEMC(BigInteger.valueOf(importExportLimit))));
-            addTooltip.accept(Lang.FLUID_EXPORT_LIMIT.translateColored(ChatFormatting.GRAY, formatEMC(BigInteger.valueOf(link.remainingFluid)), formatEMC(BigInteger.valueOf(fluidLimit))));
+            addTooltip.accept(Lang.FLUID_EXPORT_LIMIT.translateColored(ChatFormatting.GRAY, formatEMC(BigInteger.valueOf(link.remainingFluid / 81L)), formatEMC(BigInteger.valueOf(fluidLimit))));
             addTooltip.accept(Lang.FLUID_EXPORT_EFFICIENCY.translateColored(ChatFormatting.GRAY, Component.literal(fluidEfficiency + "%").withStyle(ChatFormatting.GREEN)));
         }
 

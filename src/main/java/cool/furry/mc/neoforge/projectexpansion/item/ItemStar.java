@@ -15,8 +15,8 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Rarity;
 import net.minecraft.world.level.Level;
-import net.neoforged.fml.loading.FMLEnvironment;
-import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
+import net.fabricmc.loader.api.FabricLoader;
+import cool.furry.mc.neoforge.projectexpansion.platform.CapabilityRegistrar;
 
 public class ItemStar extends ItemPE implements IItemEmcHolder, IBarHelper, IHasCapability {
     public static final long[] STAR_EMC = new long[18];
@@ -38,15 +38,15 @@ public class ItemStar extends ItemPE implements IItemEmcHolder, IBarHelper, IHas
                 tier == Star.OMEGA ? Rarity.EPIC :
                         type == Star.StarType.COLOSSAL ? Rarity.UNCOMMON :
                                 type == Star.StarType.GARGANTUAN ? Rarity.RARE : Rarity.COMMON
-        ).component(PEDataComponentTypes.STORED_EMC, 0L));
+        ).component(PEDataComponentTypes.STORED_EMC.get(), 0L));
 
         this.type = type;
         this.tier = tier;
     }
 
     @Override
-    public void registerCapabilities(RegisterCapabilitiesEvent event) {
-        IntegrationHelper.registerCuriosCapability(event, this);
+    public void registerCapabilities(CapabilityRegistrar event) {
+        IntegrationHelper.registerCuriosCapability(this);
         event.registerItem(PECapabilities.EMC_HOLDER_ITEM_CAPABILITY, (stack, dir) -> this, this);
     }
 
@@ -74,8 +74,8 @@ public class ItemStar extends ItemPE implements IItemEmcHolder, IBarHelper, IHas
     @Override
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {
         ItemStack stack = player.getItemInHand(hand);
-        if (!level.isClientSide && !FMLEnvironment.production && player.isCreative()) {
-            stack.set(PEDataComponentTypes.STORED_EMC, getMaximumEmc(stack));
+        if (!level.isClientSide && FabricLoader.getInstance().isDevelopmentEnvironment() && player.isCreative()) {
+            stack.set(PEDataComponentTypes.STORED_EMC.get(), getMaximumEmc(stack));
             return InteractionResultHolder.success(stack);
         }
         return InteractionResultHolder.pass(stack);
@@ -91,7 +91,7 @@ public class ItemStar extends ItemPE implements IItemEmcHolder, IBarHelper, IHas
 
         long toAdd = Math.min(maxEmc - storedEmc, toInsert);
         if (action.execute()) {
-            stack.set(PEDataComponentTypes.STORED_EMC, storedEmc + toAdd);
+            stack.set(PEDataComponentTypes.STORED_EMC.get(), storedEmc + toAdd);
         }
         return toAdd;
     }
@@ -102,14 +102,14 @@ public class ItemStar extends ItemPE implements IItemEmcHolder, IBarHelper, IHas
         long storedEmc = getStoredEmc(stack);
         long toRemove = Math.min(storedEmc, toExtract);
         if (action.execute()) {
-            stack.set(PEDataComponentTypes.STORED_EMC, storedEmc - toRemove);
+            stack.set(PEDataComponentTypes.STORED_EMC.get(), storedEmc - toRemove);
         }
         return toRemove;
     }
 
     @Override
     public long getStoredEmc(ItemStack stack) {
-        return stack.getOrDefault(PEDataComponentTypes.STORED_EMC, 0L);
+        return stack.getOrDefault(PEDataComponentTypes.STORED_EMC.get(), 0L);
     }
 
     @Override

@@ -51,9 +51,8 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import net.neoforged.neoforge.common.NeoForge;
-import net.neoforged.neoforge.network.PacketDistributor;
-import net.neoforged.neoforge.server.ServerLifecycleHooks;
+import moze_intel.projecte.network.PENetwork;
+import cool.furry.mc.neoforge.projectexpansion.platform.ServerContext;
 
 import javax.annotation.Nullable;
 import java.math.BigDecimal;
@@ -80,10 +79,10 @@ public class Util {
     public static final Codec<Player> PLAYER_CODEC = UUIDUtil.CODEC.xmap(Util::getPlayer, Player::getUUID);
     public static final StreamCodec<ByteBuf, Player> PLAYER_STREAM_CODEC = UUIDUtil.STREAM_CODEC.map(Util::getPlayer, Player::getUUID);
     public static final Function<String, ResourceLocation> SUN_EXPOSURE_PROTECTION = slot -> Main.rl(String.format("sun_exposure_protection_%s", slot));
-    public static final String WIKI = "https://github.com/DonovanDMC/ProjectExpansion/wiki";
+    public static final String WIKI = "https://github.com/wchiway/ProjectExpansionNeo/wiki";
 
     public static @Nullable ServerPlayer getPlayer(UUID uuid) {
-        return ServerLifecycleHooks.getCurrentServer() == null ? null : ServerLifecycleHooks.getCurrentServer().getPlayerList().getPlayer(uuid);
+        return ServerContext.getCurrentServer() == null ? null : ServerContext.getCurrentServer().getPlayerList().getPlayer(uuid);
     }
 
     public static @Nullable ServerPlayer getPlayer(@Nullable Level level, UUID uuid) {
@@ -117,7 +116,9 @@ public class Util {
         if (cleanInfo.createStack().isEmpty()) return AddKnowledgeResult.FAIL;
 
         if (!provider.hasKnowledge(cleanInfo)) {
-            if (NeoForge.EVENT_BUS.post(new PlayerAttemptLearnEvent(player, rawInfo, cleanInfo)).isCanceled())
+            var learnEvent = new PlayerAttemptLearnEvent(player, rawInfo, cleanInfo);
+            PlayerAttemptLearnEvent.EVENT.invoker().onAttemptLearn(learnEvent);
+            if (learnEvent.isCanceled())
                 return AddKnowledgeResult.FAIL;
 
             provider.addKnowledge(cleanInfo);
@@ -178,7 +179,7 @@ public class Util {
     }
 
     public static @Nullable IKnowledgeProvider getKnowledgeProvider(Player player) {
-        return player.getCapability(PECapabilities.KNOWLEDGE_CAPABILITY);
+        return PECapabilities.KNOWLEDGE_CAPABILITY.find(player);
     }
 
     public static BigInteger spreadEMC(BigInteger emc, List<IEmcStorage> storageList) {
@@ -262,7 +263,7 @@ public class Util {
     }
 
     public static @Nullable ServerLevel getDimension(ResourceKey<Level> dimension) {
-        MinecraftServer server = ServerLifecycleHooks.getCurrentServer();
+        MinecraftServer server = ServerContext.getCurrentServer();
         return server == null ? null : server.getLevel(dimension);
     }
 
@@ -366,13 +367,13 @@ public class Util {
     }
 
     public static void openTransmutationTable(Player player) {
-        player.openMenu(new TransmutationContainerProvider(null), (buf) -> {
+        cool.furry.mc.neoforge.projectexpansion.platform.Menus.open(player, new TransmutationContainerProvider(null), (buf) -> {
             buf.writeBoolean(false);
         });
     }
 
     public static void openTransmutationTable(Player player, InteractionHand hand) {
-        player.openMenu(new TransmutationContainerProvider(hand), (buf) -> {
+        cool.furry.mc.neoforge.projectexpansion.platform.Menus.open(player, new TransmutationContainerProvider(hand), (buf) -> {
             buf.writeBoolean(true);
             buf.writeEnum(hand);
             buf.writeByte(player.getInventory().selected);
@@ -453,7 +454,7 @@ public class Util {
     }
 
     public static DataComponentTypes.OwnerData getOwner(ItemStack stack) {
-        return stack.getOrDefault(DataComponentTypes.OWNER, new DataComponentTypes.OwnerData(Util.DUMMY_UUID, "None"));
+        return stack.getOrDefault(DataComponentTypes.OWNER.get(), new DataComponentTypes.OwnerData(Util.DUMMY_UUID, "None"));
     }
 
     public static long reloadEMC(MinecraftServer server) {
@@ -462,9 +463,9 @@ public class Util {
         AbstractNSSTag.clearCreatedTags();
         CustomEMCParser.init(server.registryAccess());
         EMCMappingHandler.map(
-                server.getServerResources().managers(),
+                server.getRecipeManager(),
                 server.registryAccess(),
-                server.getServerResources().resourceManager()
+                server.getResourceManager()
         );
 
         List<ServerPlayer> players = server.getPlayerList().getPlayers();
@@ -473,9 +474,9 @@ public class Util {
             SyncFuelMapperPKT fuelPacket = FuelMapper.getSyncPacket();
             SyncWorldTransmutations transmutationPacket = WorldTransmutationManager.getSyncPacket();
             for (ServerPlayer player : players) {
-                if (!player.connection.getConnection().isMemoryConnection()) {
-                    PacketDistributor.sendToPlayer(player, emcPacket, fuelPacket);
-                    PacketDistributor.sendToPlayer(player, transmutationPacket);
+                if (!player.connection.connection.isMemoryConnection()) {
+                    PENetwork.sendToPlayer(player, emcPacket, fuelPacket);
+                    PENetwork.sendToPlayer(player, transmutationPacket);
                 }
             }
         }

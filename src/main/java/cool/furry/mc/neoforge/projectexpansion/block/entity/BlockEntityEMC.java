@@ -15,8 +15,8 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
-import net.neoforged.neoforge.capabilities.ICapabilityProvider;
-import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
+import java.util.function.BiFunction;
+import cool.furry.mc.neoforge.projectexpansion.platform.CapabilityRegistrar;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.Range;
 
@@ -26,8 +26,8 @@ import java.util.List;
 
 @SuppressWarnings("unused")
 public abstract class BlockEntityEMC extends BlockEntityBase implements IEmcStorageBigInteger {
-    public static final ICapabilityProvider<BlockEntityEMC, @Nullable Direction, IEmcStorage> EMC_STORAGE_PROVIDER = (be, side) -> be;
-    public static final ICapabilityProvider<BlockEntityEMC, @Nullable Direction, IEmcStorageBigInteger> BIG_EMC_STORAGE_PROVIDER = (be, side) -> be;
+    public static final BiFunction<BlockEntityEMC, @Nullable Direction, IEmcStorage> EMC_STORAGE_PROVIDER = (be, side) -> be;
+    public static final BiFunction<BlockEntityEMC, @Nullable Direction, IEmcStorageBigInteger> BIG_EMC_STORAGE_PROVIDER = (be, side) -> be;
     private BigInteger maximumEMC;
     private BigInteger emc = BigInteger.ZERO;
     public static final Direction[] DIRECTIONS = Direction.values();
@@ -41,7 +41,7 @@ public abstract class BlockEntityEMC extends BlockEntityBase implements IEmcStor
         setMaximumEMC(maximumEMC);
     }
 
-    public static void registerCapabilities(RegisterCapabilitiesEvent event, BlockEntityType<? extends BlockEntityEMC> type) {
+    public static void registerCapabilities(CapabilityRegistrar event, BlockEntityType<? extends BlockEntityEMC> type) {
         event.registerBlockEntity(PECapabilities.EMC_STORAGE_CAPABILITY, type, EMC_STORAGE_PROVIDER);
         event.registerBlockEntity(Capabilities.BIG_EMC_STORAGE_CAPABILITY, type, BIG_EMC_STORAGE_PROVIDER);
     }
@@ -169,9 +169,9 @@ public abstract class BlockEntityEMC extends BlockEntityBase implements IEmcStor
 
         for (Direction dir : Direction.values()) {
             Either<IEmcStorage, IEmcStorageBigInteger> anyStorage = null;
-            IEmcStorageBigInteger bigStorage = WorldHelper.getCapability(level, Capabilities.BIG_EMC_STORAGE_CAPABILITY, pos.relative(dir), dir.getOpposite());
+            IEmcStorageBigInteger bigStorage = WorldHelper.getCapability(level, Capabilities.BIG_EMC_STORAGE_CAPABILITY.lookup(), pos.relative(dir), dir.getOpposite());
             if (bigStorage == null) {
-                IEmcStorage storage = WorldHelper.getCapability(level, PECapabilities.EMC_STORAGE_CAPABILITY, pos.relative(dir), dir.getOpposite());
+                IEmcStorage storage = WorldHelper.getCapability(level, PECapabilities.EMC_STORAGE_CAPABILITY.lookup(), pos.relative(dir), dir.getOpposite());
                 if (storage != null) {
                     anyStorage = Either.left(storage);
                 }

@@ -2,51 +2,39 @@ package cool.furry.mc.neoforge.projectexpansion.events;
 
 import cool.furry.mc.neoforge.projectexpansion.Main;
 import cool.furry.mc.neoforge.projectexpansion.client.Keybinds;
-import cool.furry.mc.neoforge.projectexpansion.gui.GUIArcaneTransmutationTablet;
-import cool.furry.mc.neoforge.projectexpansion.gui.GUICollector;
-import cool.furry.mc.neoforge.projectexpansion.gui.GUICondenserMK3Input;
-import cool.furry.mc.neoforge.projectexpansion.gui.GUICondenserMK3Output;
+import cool.furry.mc.neoforge.projectexpansion.gui.*;
+import cool.furry.mc.neoforge.projectexpansion.net.PacketHandler;
 import cool.furry.mc.neoforge.projectexpansion.net.packets.to_server.PacketOpenTransmutationTablet;
 import cool.furry.mc.neoforge.projectexpansion.registries.MenuTypes;
-import net.minecraft.client.Minecraft;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.client.event.ClientTickEvent;
-import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
-import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
-import net.neoforged.neoforge.network.PacketDistributor;
+import moze_intel.projecte.network.PENetwork;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
+import net.fabricmc.fabric.api.client.item.v1.ItemTooltipCallback;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayConnectionEvents;
+import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
+import net.fabricmc.fabric.api.event.Event;
+import net.minecraft.client.gui.screens.MenuScreens;
 
-public class ClientEvents {
-    @EventBusSubscriber(modid = Main.MOD_ID, value = Dist.CLIENT, bus = EventBusSubscriber.Bus.MOD)
-    public static class ModEvents {
-        @SubscribeEvent
-        public static void registerMenuScreens(RegisterMenuScreensEvent event) {
-            event.register(MenuTypes.COLLECTOR_TIER_1.get(), GUICollector.Tier1::new);
-            event.register(MenuTypes.COLLECTOR_TIER_2.get(), GUICollector.Tier2::new);
-            event.register(MenuTypes.COLLECTOR_TIER_3.get(), GUICollector.Tier3::new);
-            event.register(MenuTypes.CONDENSER_MK3_INPUT.get(), GUICondenserMK3Input::new);
-            event.register(MenuTypes.CONDENSER_MK3_OUTPUT.get(), GUICondenserMK3Output::new);
-            event.register(MenuTypes.ARCANE_TRANSMUTATION_TABLET.get(), GUIArcaneTransmutationTablet::new);
-        }
-
-        @SubscribeEvent
-        public static void registerKeyMappingsEvent(RegisterKeyMappingsEvent event) {
-            Keybinds.register(event);
-        }
-    }
-
-    @EventBusSubscriber(modid = Main.MOD_ID, value = Dist.CLIENT, bus = EventBusSubscriber.Bus.GAME)
-    public static class GameEvents {
-        @SubscribeEvent
-        public static void clientTickEvent(ClientTickEvent.Pre event) {
-            if (!Keybinds.REGISTERED) return;
-
-            boolean openTransmutationTablet = Keybinds.OPEN_TRANSMUTATION_TABLET.consumeClick();
-            Minecraft mc = Minecraft.getInstance();
-            if (mc.screen != null || mc.player == null) return;
-
-            if (openTransmutationTablet) PacketDistributor.sendToServer(PacketOpenTransmutationTablet.INSTANCE);
-        }
+public final class ClientEvents {
+    public static void register() {
+        MenuScreens.register(MenuTypes.COLLECTOR_TIER_1.get(), GUICollector.Tier1::new);
+        MenuScreens.register(MenuTypes.COLLECTOR_TIER_2.get(), GUICollector.Tier2::new);
+        MenuScreens.register(MenuTypes.COLLECTOR_TIER_3.get(), GUICollector.Tier3::new);
+        MenuScreens.register(MenuTypes.CONDENSER_MK3_INPUT.get(), GUICondenserMK3Input::new);
+        MenuScreens.register(MenuTypes.CONDENSER_MK3_OUTPUT.get(), GUICondenserMK3Output::new);
+        MenuScreens.register(MenuTypes.ARCANE_TRANSMUTATION_TABLET.get(), GUIArcaneTransmutationTablet::new);
+        Keybinds.register();
+        PacketHandler.registerClientReceivers();
+        RenderingEvent.registerRenderers();
+        var phase = Main.rl("after_projecte");
+        ItemTooltipCallback.EVENT.addPhaseOrdering(Event.DEFAULT_PHASE, phase);
+        ItemTooltipCallback.EVENT.register(phase, ItemTooltipEvents::itemTooltipEvent);
+        HudRenderCallback.EVENT.register(EMCDisplay.INSTANCE::render);
+        ClientPlayConnectionEvents.DISCONNECT.register((handler, client) -> EMCDisplay.reset());
+        ClientTickEvents.END_CLIENT_TICK.register(client -> {
+            EMCDisplay.onTick();
+            if (Keybinds.OPEN_TRANSMUTATION_TABLET.consumeClick() && client.screen == null && client.player != null) {
+                PENetwork.sendToServer(PacketOpenTransmutationTablet.INSTANCE);
+            }
+        });
     }
 }

@@ -7,18 +7,18 @@ import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.world.entity.player.Player;
-import net.neoforged.neoforge.network.codec.NeoForgeStreamCodecs;
-import net.neoforged.neoforge.network.handling.IPayloadContext;
+import cool.furry.mc.neoforge.projectexpansion.net.StreamCodecs;
+import moze_intel.projecte.network.PEPacketContext;
 
 public record PacketArcaneTransmutationTabletSmallButton(Action action) implements IPacket {
     public static final CustomPacketPayload.Type<PacketArcaneTransmutationTabletSmallButton> TYPE = new CustomPacketPayload.Type<>(Main.rl("arcane_transmutation_tablet_small_button"));
     public static final StreamCodec<RegistryFriendlyByteBuf, PacketArcaneTransmutationTabletSmallButton> STREAM_CODEC = StreamCodec.composite(
-            NeoForgeStreamCodecs.enumCodec(Action.class), PacketArcaneTransmutationTabletSmallButton::action,
+            StreamCodecs.enumCodec(Action.class), PacketArcaneTransmutationTabletSmallButton::action,
             PacketArcaneTransmutationTabletSmallButton::new
     );
 
     @Override
-    public void handle(IPayloadContext context) {
+    public void handle(PEPacketContext context) {
         Player player = context.player();
         if (player.containerMenu instanceof ContainerArcaneTransmutationTablet container) {
             switch (action) {

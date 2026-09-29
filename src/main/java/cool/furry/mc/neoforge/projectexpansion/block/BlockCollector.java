@@ -35,9 +35,9 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.material.MapColor;
 import net.minecraft.world.level.material.PushReaction;
 import net.minecraft.world.phys.BlockHitResult;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
-import net.neoforged.neoforge.capabilities.Capabilities;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import cool.furry.mc.neoforge.projectexpansion.platform.InventoryCapabilities;
 
 import javax.annotation.Nullable;
 import java.math.BigDecimal;
@@ -48,7 +48,7 @@ public class BlockCollector extends BlockDirection implements IHasMatter, Entity
     private final Matter matter;
 
     public BlockCollector(BlockBehaviour.Properties properties, Matter matter) {
-        super(properties);
+        super(properties.pushReaction(PushReaction.BLOCK).mapColor(matter.mapColor == null ? MapColor.NONE : matter.mapColor.get()));
         this.matter = matter;
     }
 
@@ -88,7 +88,7 @@ public class BlockCollector extends BlockDirection implements IHasMatter, Entity
         return Util.getMatterForProjectE(getMatter());
     }
 
-    @OnlyIn(Dist.CLIENT)
+    @Environment(EnvType.CLIENT)
     @Override
     public void appendHoverText(ItemStack stack, Item.TooltipContext context, List<Component> list, TooltipFlag tooltipFlag) {
         super.appendHoverText(stack, context, list, tooltipFlag);
@@ -109,11 +109,6 @@ public class BlockCollector extends BlockDirection implements IHasMatter, Entity
     }
 
     @Override
-    public PushReaction getPistonPushReaction(BlockState state) {
-        return PushReaction.BLOCK;
-    }
-
-    @Override
     protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hitResult) {
         if (level.isClientSide) {
             return InteractionResult.SUCCESS;
@@ -121,7 +116,7 @@ public class BlockCollector extends BlockDirection implements IHasMatter, Entity
 
         BlockEntityCollector collector = WorldHelper.getBlockEntity(BlockEntityCollector.class, level, pos);
         if (collector == null) return InteractionResult.FAIL;
-        player.openMenu(collector, pos);
+        cool.furry.mc.neoforge.projectexpansion.platform.Menus.open(player, collector, pos);
 
         return InteractionResult.CONSUME;
     }
@@ -140,7 +135,7 @@ public class BlockCollector extends BlockDirection implements IHasMatter, Entity
             //If something went wrong fallback to default implementation
             return super.getAnalogOutputSignal(state, level, pos);
         }
-        net.neoforged.neoforge.items.IItemHandler handler = WorldHelper.getCapability(level, Capabilities.ItemHandler.BLOCK, pos, state, collector, Direction.UP);
+        moze_intel.projecte.api.item_handlers.IItemHandler handler = WorldHelper.getItemHandler(level, pos, state, collector, Direction.UP);
         if (handler == null) {
             //If something went wrong fallback to default implementation
             return super.getAnalogOutputSignal(state, level, pos);
@@ -149,7 +144,7 @@ public class BlockCollector extends BlockDirection implements IHasMatter, Entity
         if (charging.isEmpty()) {
             return MathUtils.scaleToRedstone(collector.getStoredEmc(), collector.getMaximumEmc());
         }
-        IItemEmcHolder emcHolder = charging.getCapability(PECapabilities.EMC_HOLDER_ITEM_CAPABILITY);
+        IItemEmcHolder emcHolder = PECapabilities.EMC_HOLDER_ITEM_CAPABILITY.find(charging);
         if (emcHolder != null) {
             return MathUtils.scaleToRedstone(emcHolder.getStoredEmc(charging), emcHolder.getMaximumEmc(charging));
         }
@@ -167,11 +162,6 @@ public class BlockCollector extends BlockDirection implements IHasMatter, Entity
             }
             super.onRemove(state, level, pos, newState, isMoving);
         }
-    }
-
-    @Override
-    public MapColor getMapColor(BlockState state, BlockGetter level, BlockPos pos, MapColor defaultColor) {
-        return matter.mapColor == null ? super.getMapColor(state, level, pos, defaultColor) : matter.mapColor.get();
     }
 
     @Override

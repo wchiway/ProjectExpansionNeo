@@ -39,19 +39,18 @@ import net.minecraft.world.level.block.entity.ContainerOpenersCounter;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
-import net.neoforged.neoforge.capabilities.Capabilities;
-import net.neoforged.neoforge.capabilities.ICapabilityProvider;
-import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
-import net.neoforged.neoforge.common.NeoForge;
-import net.neoforged.neoforge.items.IItemHandler;
-import net.neoforged.neoforge.items.ItemHandlerHelper;
+import cool.furry.mc.neoforge.projectexpansion.platform.InventoryCapabilities;
+import java.util.function.BiFunction;
+import cool.furry.mc.neoforge.projectexpansion.platform.CapabilityRegistrar;
+import moze_intel.projecte.api.item_handlers.IItemHandler;
+import moze_intel.projecte.api.item_handlers.ItemHandlerHelper;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 
 public class BlockEntityCondenserMK3 extends BlockEntityBase implements IChestLike, MenuProvider {
-    public static final ICapabilityProvider<BlockEntityCondenserMK3, @Nullable Direction, IItemHandler> ITEM_HANDLER_CAPABILITY = BlockEntityCondenserMK3::getAutomationSidedItemHandler;
-    public static final ICapabilityProvider<BlockEntityCondenserMK3, @Nullable Direction, IEmcStorage> EMC_STORAGE_PROVIDER = BlockEntityCondenserMK3::getSidedHandler;
+    public static final BiFunction<BlockEntityCondenserMK3, @Nullable Direction, IItemHandler> ITEM_HANDLER_CAPABILITY = BlockEntityCondenserMK3::getAutomationSidedItemHandler;
+    public static final BiFunction<BlockEntityCondenserMK3, @Nullable Direction, IEmcStorage> EMC_STORAGE_PROVIDER = BlockEntityCondenserMK3::getSidedHandler;
     public static final Direction OUTPUT_DIRECTION = Direction.DOWN;
     private static final int INPUT_SIZE = 91;
     private static final int OUTPUT_SIZE = 180;
@@ -90,8 +89,8 @@ public class BlockEntityCondenserMK3 extends BlockEntityBase implements IChestLi
         }
     }
 
-    public static void registerCapabilities(RegisterCapabilitiesEvent event) {
-        event.registerBlockEntity(Capabilities.ItemHandler.BLOCK, BlockEntityTypes.CONDENSER_MK3.get(), ITEM_HANDLER_CAPABILITY);
+    public static void registerCapabilities(CapabilityRegistrar event) {
+        event.registerBlockEntity(InventoryCapabilities.ItemHandler.BLOCK, BlockEntityTypes.CONDENSER_MK3.get(), ITEM_HANDLER_CAPABILITY);
         event.registerBlockEntity(PECapabilities.EMC_STORAGE_CAPABILITY, BlockEntityTypes.CONDENSER_MK3.get(), EMC_STORAGE_PROVIDER);
     }
 
@@ -277,7 +276,9 @@ public class BlockEntityCondenserMK3 extends BlockEntityBase implements IChestLi
                 if (!stack.isEmpty()) {
                     ItemInfo sourceInfo = ItemInfo.fromStack(stack);
                     ItemInfo reducedInfo = IEMCProxy.INSTANCE.getPersistentInfo(sourceInfo);
-                    if (!NeoForge.EVENT_BUS.post(new PlayerAttemptCondenserSetEvent(player, sourceInfo, reducedInfo)).isCanceled()) {
+                    var setEvent = new PlayerAttemptCondenserSetEvent(player, sourceInfo, reducedInfo);
+                    PlayerAttemptCondenserSetEvent.EVENT.invoker().onAttemptCondenserSet(setEvent);
+                    if (!setEvent.isCanceled()) {
                         lockInfo = reducedInfo;
                         checkLockAndUpdate(true);
                         markDirty(level, pos, false);

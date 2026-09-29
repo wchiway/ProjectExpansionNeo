@@ -3,25 +3,22 @@ package cool.furry.mc.neoforge.projectexpansion.util;
 import cool.furry.mc.neoforge.projectexpansion.Main;
 import moze_intel.projecte.api.capabilities.IKnowledgeProvider;
 import net.minecraft.server.level.ServerPlayer;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
-import net.neoforged.neoforge.event.tick.ServerTickEvent;
+import net.minecraft.server.MinecraftServer;
 
 import javax.annotation.Nullable;
 import java.math.BigInteger;
 import java.util.*;
 
-@EventBusSubscriber(modid = Main.MOD_ID, bus = EventBusSubscriber.Bus.GAME)
 public class PowerFlowerCollector {
     private static final Map<UUID, BigInteger> stored = new HashMap<>();
     private static int tick = 0;
+    public static void clear() { stored.clear(); tick = 0; }
     public static void add(ServerPlayer player, BigInteger amount) {
         UUID uuid = player.getUUID();
         stored.put(uuid, stored.containsKey(uuid) ? stored.get(uuid).add(amount) : amount);
     }
 
-    @SubscribeEvent
-    public static void onTick(ServerTickEvent.Post event) {
+    public static void onTick(MinecraftServer server) {
         tick++;
         if (tick >= 20) {
             tick = 0;

@@ -10,24 +10,27 @@
     "KnowledgeSyncChangePKTMixin",
     "KnowledgeSyncEmcPKTMixin",
     "KnowledgeSyncInputsAndLocksPKTMixin",
-    "KnowledgeSyncPKTMixin"
+    "KnowledgeSyncPKTMixin",
+    "CollectorRecipeCategoryMixin"
   ],
   "mixins": [
     "AlchemicalBagMixin",
     "AlchemicalCollectionMixin",
     "AlchemicalCollectionToggleMixin",
-    "CollectorRecipeCategoryMixin",
     "EnchantmentProcessorMixin",
     "PacketHandlerMixin",
-    "PhilosophersStoneMixin",
     "RemoveEMCCMDMixin",
     "ResetEMCCMDMixin",
     "SearchUpdatePKTMixin",
     "SetEmcCMDMixin",
     "ShutTheFuckUpMixin",
-    "TomeMixin"
+    "TomeMixin",
+    "ItemAttributesMixin",
+    "FurnaceFuelMixin",
+    "ProjectEInitializationMixin"
   ],
   "injectors": {
     "defaultRequire": 1
-	}
+  },
+  "plugin": "cool.furry.mc.neoforge.projectexpansion.mixin.ExpansionMixinPlugin"
 }

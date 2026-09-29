@@ -20,7 +20,7 @@ import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
-import net.neoforged.neoforge.network.PacketDistributor;
+import moze_intel.projecte.network.PENetwork;
 import org.jetbrains.annotations.Nullable;
 
 import java.math.BigInteger;
@@ -244,7 +244,7 @@ public abstract class ContainerBase extends AbstractContainerMenu {
         //Note: We ignore suppressRemoteUpdates as that is mostly used as a hack for slot syncing
         // (which we don't sync with this) and also we would have to AT in to access it
         if (this.playerInv.player instanceof ServerPlayer player) {
-            PacketDistributor.sendToPlayer(player, packet);
+            PENetwork.sendToPlayer(player, packet);
         }
     }
 

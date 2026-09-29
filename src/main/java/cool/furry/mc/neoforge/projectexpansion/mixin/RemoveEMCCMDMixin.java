@@ -17,7 +17,7 @@ import java.util.function.Supplier;
 public class RemoveEMCCMDMixin {
     @ModifyArg(
         method = "removeEmc(Lcom/mojang/brigadier/context/CommandContext;Lmoze_intel/projecte/api/nss/NSSItem;)I",
-        at = @At(value = "INVOKE", target = "Lnet/minecraft/commands/CommandSourceStack;sendSuccess(Ljava/util/function/Supplier;Z)V", ordinal = 1),
+        at = @At(value = "INVOKE", target = "Lnet/minecraft/commands/CommandSourceStack;sendSuccess(Ljava/util/function/Supplier;Z)V", ordinal = 1, remap = true),
         index = 0,
         remap = false
     )

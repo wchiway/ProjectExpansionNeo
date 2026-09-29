@@ -48,12 +48,12 @@ import net.minecraft.world.level.pathfinder.PathComputationType;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
-import net.neoforged.neoforge.capabilities.Capabilities;
-import net.neoforged.neoforge.items.IItemHandler;
-import net.neoforged.neoforge.items.IItemHandlerModifiable;
-import net.neoforged.neoforge.items.ItemHandlerHelper;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import cool.furry.mc.neoforge.projectexpansion.platform.InventoryCapabilities;
+import moze_intel.projecte.api.item_handlers.IItemHandler;
+import moze_intel.projecte.api.item_handlers.IItemHandlerModifiable;
+import moze_intel.projecte.api.item_handlers.ItemHandlerHelper;
 
 import javax.annotation.Nullable;
 import java.util.List;
@@ -68,7 +68,7 @@ public class BlockAdvancedAlchemicalChest extends HorizontalDirectionalBlock imp
 	private final DyeColor color;
 
 	public BlockAdvancedAlchemicalChest(BlockBehaviour.Properties properties, DyeColor color) {
-		super(properties);
+		super(properties.mapColor(MapColor.byId(color.getId())));
 		this.registerDefaultState(this.stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(WATERLOGGED, false));
 		this.color = color;
 	}
@@ -82,7 +82,7 @@ public class BlockAdvancedAlchemicalChest extends HorizontalDirectionalBlock imp
 		return color;
 	}
 
-	@OnlyIn(Dist.CLIENT)
+	@Environment(EnvType.CLIENT)
 	@Override
 	public void appendHoverText(ItemStack stack, Item.TooltipContext context, List<Component> list, TooltipFlag tooltipFlag) {
 		super.appendHoverText(stack, context, list, tooltipFlag);
@@ -116,7 +116,7 @@ public class BlockAdvancedAlchemicalChest extends HorizontalDirectionalBlock imp
 		if (blockEntity == null) return InteractionResult.FAIL;
 
 		InteractionHand hand = player.getUsedItemHand();
-		player.openMenu(new ContainerProvider(blockEntity, hand), (buf) -> {
+		cool.furry.mc.neoforge.projectexpansion.platform.Menus.open(player, new ContainerProvider(blockEntity, hand), (buf) -> {
 			buf.writeEnum(hand);
 			buf.writeByte(player.getInventory().selected);
 			buf.writeBoolean(false);
@@ -186,7 +186,7 @@ public class BlockAdvancedAlchemicalChest extends HorizontalDirectionalBlock imp
 			return super.getAnalogOutputSignal(state, level, pos);
 		}
 
-		IItemHandler handler = WorldHelper.getCapability(level, Capabilities.ItemHandler.BLOCK, pos, state, blockEntity, Direction.UP);
+		IItemHandler handler = WorldHelper.getItemHandler(level, pos, state, blockEntity, Direction.UP);
 		if (handler == null) {
 			return super.getAnalogOutputSignal(state, level, pos);
 		}
@@ -217,11 +217,6 @@ public class BlockAdvancedAlchemicalChest extends HorizontalDirectionalBlock imp
 		super.triggerEvent(state, level, pos, id, param);
 		BlockEntity blockEntity = WorldHelper.getBlockEntity(BlockEntityAdvancedAlchemicalChest.class, level, pos);
 		return blockEntity != null && blockEntity.triggerEvent(id, param);
-	}
-
-	@Override
-	public MapColor getMapColor(BlockState state, BlockGetter level, BlockPos pos, MapColor defaultColor) {
-		return MapColor.byId(this.color.getId());
 	}
 
 	@Override

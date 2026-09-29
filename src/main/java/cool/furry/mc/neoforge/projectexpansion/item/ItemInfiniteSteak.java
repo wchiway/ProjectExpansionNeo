@@ -17,8 +17,8 @@ import net.minecraft.world.food.FoodProperties;
 import net.minecraft.world.food.Foods;
 import net.minecraft.world.item.*;
 import net.minecraft.world.level.Level;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 
 import javax.annotation.Nullable;
 import java.math.BigInteger;
@@ -33,7 +33,7 @@ public class ItemInfiniteSteak extends Item {
                 .rarity(Rarity.RARE));
     }
 
-    @OnlyIn(Dist.CLIENT)
+    @Environment(EnvType.CLIENT)
     @Override
     public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> list, TooltipFlag flag) {
         super.appendHoverText(stack, context, list, flag);
@@ -46,11 +46,6 @@ public class ItemInfiniteSteak extends Item {
         return Items.COOKED_BEEF.getUseDuration(stack, entity);
     }
 
-    @Nullable
-    @Override
-    public FoodProperties getFoodProperties(ItemStack stack, @Nullable LivingEntity entity) {
-        return Items.COOKED_BEEF.getFoodProperties(stack, entity);
-    }
 
     @Override
     public InteractionResultHolder<ItemStack> use(Level level, Player player, InteractionHand hand) {

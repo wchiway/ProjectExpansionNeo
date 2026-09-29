@@ -9,7 +9,7 @@ import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.neoforged.neoforge.network.handling.IPayloadContext;
+import moze_intel.projecte.network.PEPacketContext;
 
 public record PacketUpdateWindowInt(short windowId, short propId, int propVal) implements IPacket {
     public static final CustomPacketPayload.Type<PacketUpdateWindowInt> TYPE = new CustomPacketPayload.Type<>(Main.rl("update_window_int"));
@@ -21,7 +21,7 @@ public record PacketUpdateWindowInt(short windowId, short propId, int propVal) i
     );
 
     @Override
-    public void handle(IPayloadContext context) {
+    public void handle(PEPacketContext context) {
         LocalPlayer player = Minecraft.getInstance().player;
         if (player != null && player.containerMenu instanceof ContainerBase container && player.containerMenu.containerId == windowId) {
             container.updateProgressBarInt(propId, propVal);

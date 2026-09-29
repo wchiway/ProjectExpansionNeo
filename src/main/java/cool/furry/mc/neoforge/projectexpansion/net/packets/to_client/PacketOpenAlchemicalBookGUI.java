@@ -11,7 +11,7 @@ import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.world.InteractionHand;
-import net.neoforged.neoforge.network.handling.IPayloadContext;
+import moze_intel.projecte.network.PEPacketContext;
 
 import java.util.List;
 
@@ -31,7 +31,7 @@ public record PacketOpenAlchemicalBookGUI(InteractionHand hand, List<CapabilityA
     }
 
     @Override
-    public void handle(IPayloadContext context) {
+    public void handle(PEPacketContext context) {
         ClientSideHandler.handleAlchemicalBookOpen(this);
     }
 }
