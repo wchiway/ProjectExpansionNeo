@@ -54,7 +54,7 @@ abstract class UpdateJson extends DefaultTask {
         }
 
         String version = "${minecraftVersion}-${modVersion}"
-        versionData[version] = "https://github.com/DonovanDMC/ProjectExpansion/releases/tag/${version}"
+        versionData[version] = "https://github.com/wchiway/ProjectExpansionNeo/releases/tag/${version}"
 
         // Update promos
         updateJson.promos."${minecraftVersion}-latest" = version

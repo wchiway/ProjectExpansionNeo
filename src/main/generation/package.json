@@ -8,14 +8,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/DonovanDMC/ProjectExpansion.git"
+    "url": "git+https://github.com/wchiway/ProjectExpansionNeo.git"
   },
-  "author": "Donovan Daniels <hewwo@yiff.rocks>",
+  "author": "Chiway Wang",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/DonovanDMC/ProjectExpansion/issues"
+    "url": "https://github.com/wchiway/ProjectExpansionNeo/issues"
   },
-  "homepage": "https://github.com/DonovanDMC/ProjectExpansion#readme",
+  "homepage": "https://github.com/wchiway/ProjectExpansionNeo#readme",
   "dependencies": {
     "@types/node": "^18.11.9",
     "@uwu-codes/eslint-config": "^1.1.3",
