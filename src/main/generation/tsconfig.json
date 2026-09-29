@@ -1,5 +1,10 @@
 {
   "extends": "@uwu-codes/tsconfig",
+  "ts-node": {
+    "esm": true,
+    "swc": false,
+    "experimentalSpecifierResolution": "node"
+  },
   "compilerOptions": {
     "outDir": "./build",
     "strictPropertyInitialization": false,

@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
-DIR=$(realpath "$(cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )")
-cd "$DIR/../src/main/generation" || exit 1
-npm i
-node --no-warnings --no-deprecation --experimental-specifier-resolution=node --loader ts-node/esm run
+set -euo pipefail
+
+project_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)
+cd "$project_dir/src/main/generation"
+npm ci --no-audit --no-fund --cache "$project_dir/.gradle_home/npm"
+node --no-warnings --loader ts-node/esm run.ts
