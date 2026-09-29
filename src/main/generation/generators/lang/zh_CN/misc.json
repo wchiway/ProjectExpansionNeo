@@ -1,5 +1,5 @@
 {
-	"itemGroup.projectexpansion": "等价扩展:Neo",
+	"itemGroup.projectexpansion": "等价升华:Neo",
 	"enchantment.projectexpansion.alchemical_collection": "炼金采集",
 	"enchantment.projectexpansion.alchemical_collection.desc": "挖掘任何具备 EMC 价值的方块时，将其产物直接转化为 EMC 存入账户。",
 	"text.projectexpansion.wip": "开发中内容！",
@@ -37,7 +37,7 @@
 	"death.attack.walk_on_sun.player": "%s 在与 %s 决斗时试图漫步在烈日之上",
 	"death.attack.stare_at_sun": "%s 误以为直视骄阳是个好主意",
 	"death.attack.stare_at_sun.player": "%s 在与 %s 决斗时直视了骄阳",
-	"config.jade.plugin_projectexpansion.provider": "等价扩展:Neo 数据接口",
+	"config.jade.plugin_projectexpansion.provider": "等价升华:Neo 数据接口",
 	"attribute.projectexpansion.sun_exposure_protection": "强光灼烧防护",
 	"curios.identifier.transmutation_tablet": "便携转化桌",
 	"key.projecte.curios.open_transmutation_tablet": "开启便携转化桌",

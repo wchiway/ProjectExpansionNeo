@@ -1,6 +1,6 @@
-# 等价扩展:Neo（ProjectExpansionNeo）
+# 等价升华:Neo（ProjectExpansionNeo）
 
-**等价扩展:Neo**（英文名 **ProjectExpansionNeo**）是面向 **Minecraft 1.21.1 / Fabric** 的 ProjectEF Neo 扩展，
+**等价升华:Neo**（英文名 **ProjectExpansionNeo**）是面向 **Minecraft 1.21.1 / Fabric** 的 ProjectEF Neo 扩展，
 由 Project Expansion 的 NeoForge 版本迁移而来，为 EMC 的生产、存储与自动化提供更多选择。
 
 ## 主要内容
