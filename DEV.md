@@ -72,7 +72,8 @@ Loom 的开发环境重映射无法完整暴露前置 JAR 的内嵌库，因此�
 测试模组位于 `src/testmod/`，仅在指定 `-Pgametest` 时启用，不进入发布 JAR。
 
 - GameTest 覆盖收集器库存的嵌套事务、EMC 链接的大整数结算与回滚、
-  流体单位及额度恢复、无限燃料仅扣费一次，以及奥术转换终端的主手、副手和无手持打开。
+  流体单位及额度恢复、无限燃料在原版熔炉与 ProjectEF 暗物质/红物质熔炉中的放入、保留与按次扣费，
+  以及奥术转换终端的主手、副手和无手持打开。
   报告为 `build/gametest-results.xml`。
 - `runClientSmoke` 使用独立的 `build/client-smoke/` 目录，
   检查客户端初始化、按键绑定和本模组全部已注册物品的模型，然后自动退出。
@@ -185,5 +186,13 @@ Java 包根目录为 `src/main/java/cool/furry/mc/neoforge/projectexpansion/`。
   流体使用 Fabric droplets（每桶 81,000）。
 - 可选集成需要检查模组加载条件，并保持客户端与服务端的类加载隔离。
 - 修改 Gradle 任务时保持配置缓存可用：提前捕获所需值，避免在任务执行闭包中访问 `project`。
+- 无限燃料按次扣费而不是消耗物品，因此**不注册进原版燃料表**：
+  注册会让其他模组的机器把它当作普通燃料烧掉且不扣费。
+  原版熔炉由 `FurnaceFuelMixin` 接管燃料判定（`isFuel`）、燃烧时长与消耗点；
+  ProjectEF 的暗物质/红物质熔炉另有燃料表，由 `MatterFurnaceFuelMixin` 接管时长与消耗点，
+  并由 `SlotPredicatesMixin` 放开其燃料槽判定。三处必须同时存在，缺一会表现为无法放入或扣费异常。
+  这些 mixin 直接依赖 ProjectEF 内部方法名（`getItemBurnTime`、`tickServer`、`SlotPredicates.FURNACE_FUEL`），
+  升级 `projectef_version` 后必须重新核对并运行 GameTest。
+  暗物质/红物质熔炉使用配置的燃烧时长本身，不再乘以熔炉等级倍率，与同配置的原版熔炉保持一致。
 - 不提交 `.gradle_home/`、`.gradle/`、`build/`、`run/` 和 `node_modules/`。
 - 旧 `buildSrc/` 与发布脚本未接入 Fabric 构建，不作为本项目的常规构建入口。

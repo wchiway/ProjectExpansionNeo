@@ -11,6 +11,8 @@ import java.math.BigInteger;
 import java.math.RoundingMode;
 import moze_intel.projecte.api.capabilities.PECapabilities;
 import moze_intel.projecte.api.proxy.IEMCProxy;
+import moze_intel.projecte.gameObjs.block_entities.DMFurnaceBlockEntity;
+import moze_intel.projecte.gameObjs.container.slots.SlotPredicates;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidConstants;
 import net.fabricmc.fabric.api.transfer.v1.fluid.FluidStorage;
@@ -20,8 +22,11 @@ import net.fabricmc.fabric.api.transfer.v1.item.ItemVariant;
 import net.fabricmc.fabric.api.transfer.v1.transaction.Transaction;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -196,8 +201,10 @@ public class ExpansionGameTests implements FabricGameTest {
             var world = test.getLevel();
             var pos = test.absolutePos(relative);
             var furnace = (AbstractFurnaceBlockEntity) world.getBlockEntity(pos);
-            var fuel = new ItemStack(cool.furry.mc.neoforge.projectexpansion.registries.Items.INFINITE_FUEL.get());
-            fuel.set(DataComponentTypes.OWNER.get(), new DataComponentTypes.OwnerData(player.getUUID(), player.getName().getString()));
+            var fuel = newItemInfiniteFuel(player);
+            test.assertTrue(AbstractFurnaceBlockEntity.isFuel(fuel), "The furnace recognises the infinite fuel as fuel");
+            test.assertTrue(furnace.canPlaceItem(1, fuel), "The infinite fuel can be placed in the fuel slot");
+            test.assertTrue(furnace.canPlaceItemThroughFace(1, fuel, Direction.UP), "Automation can insert the infinite fuel");
             furnace.setItem(0, new ItemStack(Items.IRON_ORE));
             furnace.setItem(1, fuel);
             AbstractFurnaceBlockEntity.serverTick(world, pos, world.getBlockState(pos), furnace);
@@ -209,5 +216,40 @@ public class ExpansionGameTests implements FabricGameTest {
         } finally {
             test.getLevel().getServer().getPlayerList().remove(player);
         }
+    }
+
+    @GameTest(template = EMPTY_STRUCTURE)
+    public void infiniteFuelBurnsInMatterFurnaces(GameTestHelper test) {
+        var player = test.makeMockServerPlayerInLevel();
+        try {
+            var provider = PECapabilities.KNOWLEDGE_CAPABILITY.find(player);
+            for (String id : new String[]{"dm_furnace", "rm_furnace"}) {
+                BigInteger initial = BigInteger.valueOf(10_000);
+                provider.setEmc(initial);
+                BlockPos relative = new BlockPos(2, 2, 2);
+                test.setBlock(relative, BuiltInRegistries.BLOCK.get(ResourceLocation.fromNamespaceAndPath("projecte", id)));
+                var world = test.getLevel();
+                var pos = test.absolutePos(relative);
+                var furnace = (DMFurnaceBlockEntity) world.getBlockEntity(pos);
+                var fuel = newItemInfiniteFuel(player);
+                test.assertTrue(SlotPredicates.FURNACE_FUEL.test(fuel), "The matter furnace fuel slot accepts the infinite fuel");
+                furnace.getInput().insertItem(0, new ItemStack(Items.IRON_ORE), false);
+                test.assertTrue(furnace.getFuel().insertItem(0, fuel, false).isEmpty(), "The infinite fuel can be inserted into " + id);
+                DMFurnaceBlockEntity.tickServer(world, pos, world.getBlockState(pos), furnace);
+                DMFurnaceBlockEntity.tickServer(world, pos, world.getBlockState(pos), furnace);
+                test.assertTrue(furnace.getFuel().getStackInSlot(0).getCount() == 1, "Infinite fuel is not consumed in " + id);
+                test.assertTrue(provider.getEmc().equals(initial.subtract(BigInteger.valueOf(Config.server.infiniteFuelCost.get()))),
+                    "Starting one burn charges EMC exactly once in " + id);
+            }
+            test.succeed();
+        } finally {
+            test.getLevel().getServer().getPlayerList().remove(player);
+        }
+    }
+
+    private static ItemStack newItemInfiniteFuel(ServerPlayer player) {
+        var fuel = new ItemStack(cool.furry.mc.neoforge.projectexpansion.registries.Items.INFINITE_FUEL.get());
+        fuel.set(DataComponentTypes.OWNER.get(), new DataComponentTypes.OwnerData(player.getUUID(), player.getName().getString()));
+        return fuel;
     }
 }
