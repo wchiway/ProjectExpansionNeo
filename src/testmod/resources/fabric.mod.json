@@ -6,7 +6,10 @@
   "environment": "*",
   "entrypoints": {
     "client": ["cool.furry.mc.neoforge.projectexpansion.test.ClientSmokeTest"],
-    "fabric-gametest": ["cool.furry.mc.neoforge.projectexpansion.test.ExpansionGameTests"]
+    "fabric-gametest": [
+      "cool.furry.mc.neoforge.projectexpansion.test.ExpansionGameTests",
+      "cool.furry.mc.neoforge.projectexpansion.test.InfiniteFuelGameTests"
+    ]
   },
   "depends": {"projectexpansion": "*", "fabric-gametest-api-v1": "*"}
 }

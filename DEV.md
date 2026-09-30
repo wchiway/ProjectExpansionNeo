@@ -72,7 +72,7 @@ Loom 的开发环境重映射无法完整暴露前置 JAR 的内嵌库，因此�
 测试模组位于 `src/testmod/`，仅在指定 `-Pgametest` 时启用，不进入发布 JAR。
 
 - GameTest 覆盖收集器库存的嵌套事务、EMC 链接的大整数结算与回滚、
-  流体单位及额度恢复、无限燃料在原版熔炉与 ProjectEF 暗物质/红物质熔炉中的放入、保留与按次扣费，
+  流体单位及额度恢复、无限燃料在熔炉／高炉／烟熏炉及 ProjectEF 暗物质／红物质熔炉中的放入、持续计费、暂停和存档恢复，
   以及奥术转换终端的主手、副手和无手持打开。
   报告为 `build/gametest-results.xml`。
 - `runClientSmoke` 使用独立的 `build/client-smoke/` 目录，
@@ -186,13 +186,18 @@ Java 包根目录为 `src/main/java/cool/furry/mc/neoforge/projectexpansion/`。
   流体使用 Fabric droplets（每桶 81,000）。
 - 可选集成需要检查模组加载条件，并保持客户端与服务端的类加载隔离。
 - 修改 Gradle 任务时保持配置缓存可用：提前捕获所需值，避免在任务执行闭包中访问 `project`。
-- 无限燃料按次扣费而不是消耗物品，因此**不注册进原版燃料表**：
-  注册会让其他模组的机器把它当作普通燃料烧掉且不扣费。
-  原版熔炉由 `FurnaceFuelMixin` 接管燃料判定（`isFuel`）、燃烧时长与消耗点；
-  ProjectEF 的暗物质/红物质熔炉另有燃料表，由 `MatterFurnaceFuelMixin` 接管时长与消耗点，
-  并由 `SlotPredicatesMixin` 放开其燃料槽判定。三处必须同时存在，缺一会表现为无法放入或扣费异常。
+- 无限燃料按实际工作 tick 持续结算，仍然不消耗物品，也**不注册进原版燃料表**，
+  避免其他模组的机器把它当作普通燃料烧掉且不扣费。
+  每 tick 的成本为 `infiniteFuelCost / infiniteFuelBurnTime` EMC；高炉和烟熏炉按原版行为使用一半周期（最短 1 tick）。
+  ProjectEF 暗物质／红物质熔炉沿用完整周期，不额外乘等级倍率。
+  默认每 1600 个工作 tick 合计消耗 128 EMC：普通和物质熔炉约每 12～13 tick 扣 1 EMC，高炉／烟熏炉约每 6～7 tick 扣 1 EMC。
+  整数扣款多付的不足 1 EMC 零头存在物品的 `fuel_credit` 数据组件中；移动或重载继续使用，不能靠重插重置结算。
+  没有有效输入、输出堵塞或取出无限燃料后不再扣费；无法支付下一个 tick、未绑定或绑定玩家离线时不再供能。
+  余额为 0 时可用完已经支付的少量零头，不会透支。
+  `FurnaceFuelMixin` 和 `MatterFurnaceFuelMixin` 仅在熔炉的工作 tick 内支付并提供 1 tick 的燃烧时长，
+  普通时长查询和加载不扣费；`SlotPredicatesMixin` 保留 ProjectEF 燃料槽支持。
+  已存在的旧版预付燃烧时长（包括正常燃料的余火）自然结束后才进入新模式，避免重复扣费或清空正常余火。
   这些 mixin 直接依赖 ProjectEF 内部方法名（`getItemBurnTime`、`tickServer`、`SlotPredicates.FURNACE_FUEL`），
   升级 `projectef_version` 后必须重新核对并运行 GameTest。
-  暗物质/红物质熔炉使用配置的燃烧时长本身，不再乘以熔炉等级倍率，与同配置的原版熔炉保持一致。
 - 不提交 `.gradle_home/`、`.gradle/`、`build/`、`run/` 和 `node_modules/`。
 - 旧 `buildSrc/` 与发布脚本未接入 Fabric 构建，不作为本项目的常规构建入口。

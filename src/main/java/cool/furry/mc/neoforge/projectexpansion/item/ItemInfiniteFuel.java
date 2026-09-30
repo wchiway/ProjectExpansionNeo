@@ -36,41 +36,29 @@ public class ItemInfiniteFuel extends Item {
         list.add(Lang.COST.translateColored(ChatFormatting.RED, EMCFormat.getComponent(Config.server.infiniteFuelCost.get()).setStyle(ColorStyle.GRAY)));
     }
 
-    /**
-     * Burn time a single use grants the host furnace, or 0 while the bound owner cannot pay for it.
-     * <p>
-     * The item is never consumed, so furnaces that use it must call {@link #consumeCharge(ItemStack)} exactly once
-     * when the burn starts. Their fuel duration is recomputed on every start, so a burn that keeps running does not
-     * charge again.
-     */
-    public int getBurnTime(ItemStack stack) {
-        @Nullable IKnowledgeProvider provider = getOwnerProvider(stack);
-        if (provider == null) return 0;
-        if (Config.server.infiniteFuelCost.get() == 0 || Config.server.infiniteFuelBurnTime.get() == 0) return 0;
-        return provider.getEmc().compareTo(BigInteger.valueOf(Config.server.infiniteFuelCost.get())) < 0 ? 0 : Config.server.infiniteFuelBurnTime.get();
-    }
-
-    /**
-     * Charges the bound owner once for a single use. Unbound items and owners without a knowledge provider are ignored,
-     * matching {@link #getBurnTime(ItemStack)}, which refuses to burn in the same situations.
-     */
-    public void consumeCharge(ItemStack stack) {
+    /** Pays for one active furnace tick, retaining less than one prepaid EMC on the item. */
+    public boolean consumeTick(ItemStack stack, int ticksPerUse) {
         @Nullable UUID owner = getOwner(stack);
-        if (owner == null) return;
-        @Nullable IKnowledgeProvider provider = Util.getKnowledgeProvider(owner);
-        if (provider == null) return;
-        provider.setEmc(provider.getEmc().subtract(BigInteger.valueOf(Config.server.infiniteFuelCost.get())));
-        @Nullable ServerPlayer player = Util.getPlayer(owner);
-        if (player != null) provider.syncEmc(player);
+        @Nullable IKnowledgeProvider provider = owner == null ? null : Util.getKnowledgeProvider(owner);
+        int cost = Config.server.infiniteFuelCost.get();
+        if (provider == null || cost <= 0 || ticksPerUse <= 0) return false;
+
+        long credit = stack.getOrDefault(DataComponentTypes.FUEL_CREDIT.get(), DataComponentTypes.FuelCredit.EMPTY).rescale(ticksPerUse);
+        long charge = Math.max(0, (cost - credit + ticksPerUse - 1) / ticksPerUse);
+        BigInteger amount = BigInteger.valueOf(charge);
+        if (provider.getEmc().compareTo(amount) < 0) return false;
+        if (charge > 0) {
+            provider.setEmc(provider.getEmc().subtract(amount));
+            @Nullable ServerPlayer player = Util.getPlayer(owner);
+            if (player != null) provider.syncEmc(player);
+        }
+        int remaining = (int) (credit + charge * ticksPerUse - cost);
+        stack.set(DataComponentTypes.FUEL_CREDIT.get(), new DataComponentTypes.FuelCredit(remaining, ticksPerUse));
+        return true;
     }
 
     private static @Nullable UUID getOwner(ItemStack stack) {
         @Nullable DataComponentTypes.OwnerData owner = stack.get(DataComponentTypes.OWNER.get());
         return owner == null ? null : owner.uuid();
-    }
-
-    private static @Nullable IKnowledgeProvider getOwnerProvider(ItemStack stack) {
-        @Nullable UUID owner = getOwner(stack);
-        return owner == null ? null : Util.getKnowledgeProvider(owner);
     }
 }
