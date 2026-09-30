@@ -18,10 +18,15 @@ const fallback = fallbackSummary('example/ProjectExpansionNeo', metadata, '1.21.
 const english = '### Fixes\n\n- Keep exchange counts above item icons and below tooltips.\n';
 const noWarnings = () => {};
 const options = { apiKey: 'test-only', warn: noWarnings };
-const response = (content, finish_reason = 'stop') => ({
-    ok: true,
-    json: async () => ({ choices: [{ message: { content }, finish_reason }] }),
+const outputMessage = (content, status = 'completed') => ({
+    type: 'message', role: 'assistant', status,
+    content: [{ type: 'output_text', text: content, annotations: [] }],
 });
+const outputResponse = (output, overrides = {}) => ({
+    ok: true,
+    json: async () => ({ status: 'completed', error: null, incomplete_details: null, output, ...overrides }),
+});
+const response = (content, status = 'completed') => outputResponse([outputMessage(content)], { status });
 
 function repository(t) {
     const cwd = mkdtempSync(join(tmpdir(), 'projectexpansion-release-test-'));
@@ -113,29 +118,66 @@ test('requests English output, preserves full input, and accepts valid notes', a
         ...options,
         model: 'test-model',
         fetchImpl: async (url, request) => {
-            assert.equal(url, 'https://api.deepseek.com/chat/completions');
+            assert.equal(url, 'https://api.deepseek.com/responses');
+            assert.equal(request.method, 'POST');
             assert.equal(request.headers.Authorization, 'Bearer test-only');
             assert.equal(request.redirect, 'error');
             assert.ok(request.signal instanceof AbortSignal);
             const payload = JSON.parse(request.body);
             assert.equal(payload.model, 'test-model');
-            assert.match(payload.messages[0].content, /entirely in English/);
-            assert.match(payload.messages[0].content, /untrusted data/);
-            assert.ok(payload.messages[1].content.endsWith(source));
+            assert.match(payload.instructions, /entirely in English/);
+            assert.match(payload.instructions, /untrusted data/);
+            assert.ok(payload.input.endsWith(source));
+            assert.equal(payload.max_output_tokens, 2048);
+            assert.equal(payload.stream, false);
+            assert.equal(Object.hasOwn(payload, 'messages'), false);
+            assert.equal(Object.hasOwn(payload, 'max_tokens'), false);
             return response(english);
         },
     });
     assert.equal(result, english);
 });
 
+test('uses the supported default model and assembles only assistant output text', async () => {
+    const result = await summarize('commits', fallback, {
+        ...options,
+        fetchImpl: async (_url, request) => {
+            assert.equal(JSON.parse(request.body).model, 'deepseek-flash');
+            return outputResponse([
+                { type: 'reasoning', content: [{ type: 'reasoning_text', text: '这不是发布正文' }] },
+                { ...outputMessage(''), content: [
+                    { type: 'output_text', text: '### Fixes\n\n' },
+                    { type: 'output_text', text: '- Keep counts visible.\n' },
+                ] },
+                outputMessage('### Other\n\n- Update documentation.\n'),
+            ]);
+        },
+    });
+    assert.equal(result, '### Fixes\n\n- Keep counts visible.\n\n### Other\n\n- Update documentation.\n');
+});
+
 for (const [name, fetchImpl] of [
     ['HTTP failure', async () => ({ ok: false })],
     ['timeout', async () => { throw new Error('credential-containing transport error'); }],
     ['invalid JSON', async () => ({ ok: true, json: async () => { throw new SyntaxError(); } })],
-    ['missing choices', async () => ({ ok: true, json: async () => ({}) })],
+    ['missing response fields', async () => ({ ok: true, json: async () => ({}) })],
+    ['legacy Chat Completions response', async () => ({ ok: true, json: async () => ({ choices: [{ message: { content: english }, finish_reason: 'stop' }] }) })],
     ['empty content', async () => response('')],
     ['non-string content', async () => response({ text: english })],
-    ['truncated content', async () => response(english, 'length')],
+    ...['incomplete', 'failed', 'cancelled', 'in_progress', 'queued'].map(status => [
+        `${status} response`, async () => response(english, status),
+    ]),
+    ['response error', async () => outputResponse([outputMessage(english)], { error: { message: 'failed' } })],
+    ['incomplete details', async () => outputResponse([outputMessage(english)], { incomplete_details: { reason: 'max_output_tokens' } })],
+    ['missing output', async () => outputResponse(undefined)],
+    ['non-array output', async () => outputResponse({ text: english })],
+    ['reasoning without a message', async () => outputResponse([{ type: 'reasoning', content: [{ type: 'reasoning_text', text: english }] }])],
+    ['incomplete message', async () => outputResponse([outputMessage(english, 'incomplete')])],
+    ['non-assistant message', async () => outputResponse([{ ...outputMessage(english), role: 'user' }])],
+    ['empty message content', async () => outputResponse([{ ...outputMessage(english), content: [] }])],
+    ['refusal mixed with text', async () => outputResponse([{ ...outputMessage(english), content: [
+        { type: 'output_text', text: english }, { type: 'refusal', refusal: 'Cannot comply.' },
+    ] }])],
     ['Chinese content', async () => response('### Fixes\n- 修复显示层级')],
     ['unexpected headings', async () => response('### 安装\n- Install the mod.')],
     ['unstructured response', async () => response('Sorry, I cannot help.')],

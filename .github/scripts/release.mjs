@@ -84,23 +84,21 @@ export function fallbackSummary(repository, metadata, previousTag) {
 }
 
 export async function summarize(source, fallback, {
-    apiKey, model = 'deepseek-v4-flash', fetchImpl = fetch, warn = console.warn,
+    apiKey, model = 'deepseek-flash', fetchImpl = fetch, warn = console.warn,
 } = {}) {
     if (!apiKey || Buffer.byteLength(source, 'utf8') > 60_000) {
         warn('English fallback selected: API key missing or changelog too large; no API request was sent.');
         return fallback;
     }
     try {
-        const response = await fetchImpl('https://api.deepseek.com/chat/completions', {
+        const response = await fetchImpl('https://api.deepseek.com/responses', {
             method: 'POST',
             headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 model,
-                messages: [
-                    { role: 'system', content: SYSTEM_PROMPT },
-                    { role: 'user', content: `Generate the English release notes from this commit history:\n\n${source}` },
-                ],
-                max_tokens: 2048,
+                instructions: SYSTEM_PROMPT,
+                input: `Generate the English release notes from this commit history:\n\n${source}`,
+                max_output_tokens: 2048,
                 stream: false,
             }),
             signal: AbortSignal.timeout(90_000),
@@ -108,10 +106,20 @@ export async function summarize(source, fallback, {
         });
         if (!response.ok) throw new Error('Unsuccessful API status');
         const result = await response.json();
-        const choice = result?.choices?.[0];
-        const content = choice?.message?.content;
-        const headings = typeof content === 'string' ? content.split('\n').filter(line => /^\s*#/.test(line)) : [];
-        if (choice?.finish_reason !== 'stop' || typeof content !== 'string' || !content.trim()
+        if (result?.status !== 'completed' || result.error != null || result.incomplete_details != null
+            || !Array.isArray(result.output)) {
+            throw new Error('Failed or incomplete response');
+        }
+        // Reasoning items are not release text; only accept completed assistant messages.
+        const messages = result.output.filter(item => item?.type === 'message');
+        if (!messages.length || messages.some(message => message.role !== 'assistant' || message.status !== 'completed'
+            || !Array.isArray(message.content) || !message.content.length
+            || message.content.some(part => part?.type !== 'output_text' || typeof part.text !== 'string'))) {
+            throw new Error('Missing, refused, or invalid output text');
+        }
+        const content = messages.map(message => message.content.map(part => part.text).join('')).join('\n');
+        const headings = content.split('\n').filter(line => /^\s*#/.test(line));
+        if (!content.trim()
             || content.length > 20_000 || !headings.length || headings.some(line => !HEADINGS.includes(line.trim()))
             || /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}]/u.test(content)
             || content.includes('```')) {
@@ -187,7 +195,7 @@ async function main() {
     writeFileSync('build/release-notes/changelog-source.md', source);
     const summary = await summarize(source, fallbackSummary(repository, metadata, previousTag), {
         apiKey: process.env.DEEPSEEK_API_KEY,
-        model: process.env.DEEPSEEK_MODEL || 'deepseek-v4-flash',
+        model: process.env.DEEPSEEK_MODEL || 'deepseek-flash',
     });
     writeFileSync('build/release-notes/summary.md', summary);
     // A fresh output directory prevents stale or unrelated files from being published.

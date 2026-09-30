@@ -97,7 +97,9 @@ Java 修改至少执行编译；涉及事务、燃料、注册或网络的修改
 ### 配置与触发
 
 - 在仓库 **Settings → Secrets and variables → Actions** 中设置 Secret `DEEPSEEK_API_KEY`，启用英文 AI 更新日志。
-  可选的 Repository Variable `DEEPSEEK_MODEL` 覆盖模型名，默认沿用源工作流的 `deepseek-v4-flash`。
+  调用 [DeepSeek Responses API](https://api-docs.deepseek.com/guides/responses_api)（`POST https://api.deepseek.com/responses`），不使用 Chat Completions。
+  可选的 Repository Variable `DEEPSEEK_MODEL` 覆盖模型名，默认使用该接口文档列出的 `deepseek-flash`。
+  只提取已完成的 assistant 消息中的 `output_text`，不把 reasoning 内容作为发布正文；拒绝或未完成的响应使用英文兜底。
   设置密钥后，工作流会将发布范围内的提交标题发送到 DeepSeek；不会发送源代码、差异或密钥内容。
 - 推荐使用 `<minecraft_version>-<mod_version>` 格式的 tag，例如 `1.21.1-1.1.0`，与发布 JAR 和 `updates.json` 的格式一致。
   同时兼容 `1.1.0` 和 `v1.1.0`，不支持预发布后缀；每次版本只选择一种 tag 格式。

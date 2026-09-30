@@ -86,7 +86,7 @@ jobs:
       - name: Generate English release notes and stage verified assets
         env:
           DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
-          DEEPSEEK_MODEL: ${{ vars.DEEPSEEK_MODEL || 'deepseek-v4-flash' }}
+          DEEPSEEK_MODEL: ${{ vars.DEEPSEEK_MODEL || 'deepseek-flash' }}
         run: node .github/scripts/release.mjs notes
 
       - name: Upload changelog diagnostics
