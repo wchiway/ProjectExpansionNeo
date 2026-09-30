@@ -18,7 +18,7 @@ Place the following in your instance's `mods/` directory:
 
 - Fabric API for Minecraft 1.21.1.
 - The full Minecraft 1.21.1 / Fabric JAR from the [latest ProjectEF Neo release](https://github.com/wchiway/ProjectEF/releases/latest).
-- `ProjectExpansionNeo-1.21.1-1.1.0.jar`.
+- `ProjectExpansionNeo-1.21.1-1.1.1.jar`.
 
 Choose the regular ProjectEF JAR, such as `ProjectEF-1.21.1-PE1.3.1.jar`, **not** the `-api.jar` or `-sources.jar` asset.
 ProjectEF Neo bundles Forge Config API Port and the permissions library; you do not need to install them separately.
