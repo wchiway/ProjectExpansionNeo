@@ -27,6 +27,8 @@
     "TomeMixin",
     "ItemAttributesMixin",
     "FurnaceFuelMixin",
+    "MatterFurnaceFuelMixin",
+    "SlotPredicatesMixin",
     "ProjectEInitializationMixin"
   ],
   "injectors": {

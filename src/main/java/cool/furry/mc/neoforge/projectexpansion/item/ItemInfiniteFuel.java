@@ -14,7 +14,6 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Rarity;
 import net.minecraft.world.item.TooltipFlag;
-import net.minecraft.world.item.crafting.RecipeType;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 
@@ -37,25 +36,41 @@ public class ItemInfiniteFuel extends Item {
         list.add(Lang.COST.translateColored(ChatFormatting.RED, EMCFormat.getComponent(Config.server.infiniteFuelCost.get()).setStyle(ColorStyle.GRAY)));
     }
 
-    public int getBurnTime(ItemStack stack, @Nullable RecipeType<?> recipeType) {
-        @Nullable DataComponentTypes.OwnerData owner = stack.get(DataComponentTypes.OWNER.get());
-        @Nullable IKnowledgeProvider provider = owner == null ? null : Util.getKnowledgeProvider(owner.uuid());
-        if (owner == null || provider == null) return 0;
-        return (Config.server.infiniteFuelCost.get() == 0 || Config.server.infiniteFuelBurnTime.get() == 0) ? 0 : provider.getEmc().compareTo(BigInteger.valueOf(Config.server.infiniteFuelCost.get())) < 0 ? 0 : Config.server.infiniteFuelBurnTime.get();
+    /**
+     * Burn time a single use grants the host furnace, or 0 while the bound owner cannot pay for it.
+     * <p>
+     * The item is never consumed, so furnaces that use it must call {@link #consumeCharge(ItemStack)} exactly once
+     * when the burn starts. Their fuel duration is recomputed on every start, so a burn that keeps running does not
+     * charge again.
+     */
+    public int getBurnTime(ItemStack stack) {
+        @Nullable IKnowledgeProvider provider = getOwnerProvider(stack);
+        if (provider == null) return 0;
+        if (Config.server.infiniteFuelCost.get() == 0 || Config.server.infiniteFuelBurnTime.get() == 0) return 0;
+        return provider.getEmc().compareTo(BigInteger.valueOf(Config.server.infiniteFuelCost.get())) < 0 ? 0 : Config.server.infiniteFuelBurnTime.get();
     }
 
-
-    @Override
-    public ItemStack getRecipeRemainder(ItemStack stack) {
-        DataComponentTypes.OwnerData ownerData = stack.get(DataComponentTypes.OWNER.get());
-        @Nullable UUID owner = ownerData == null ? null : ownerData.uuid();
-        if (owner == null)
-            return stack.copy();
-        ServerPlayer player = Util.getPlayer(owner);
+    /**
+     * Charges the bound owner once for a single use. Unbound items and owners without a knowledge provider are ignored,
+     * matching {@link #getBurnTime(ItemStack)}, which refuses to burn in the same situations.
+     */
+    public void consumeCharge(ItemStack stack) {
+        @Nullable UUID owner = getOwner(stack);
+        if (owner == null) return;
         @Nullable IKnowledgeProvider provider = Util.getKnowledgeProvider(owner);
-        if (provider == null) return stack.copy();
+        if (provider == null) return;
         provider.setEmc(provider.getEmc().subtract(BigInteger.valueOf(Config.server.infiniteFuelCost.get())));
+        @Nullable ServerPlayer player = Util.getPlayer(owner);
         if (player != null) provider.syncEmc(player);
-        return stack.copy();
+    }
+
+    private static @Nullable UUID getOwner(ItemStack stack) {
+        @Nullable DataComponentTypes.OwnerData owner = stack.get(DataComponentTypes.OWNER.get());
+        return owner == null ? null : owner.uuid();
+    }
+
+    private static @Nullable IKnowledgeProvider getOwnerProvider(ItemStack stack) {
+        @Nullable UUID owner = getOwner(stack);
+        return owner == null ? null : Util.getKnowledgeProvider(owner);
     }
 }
