@@ -47,8 +47,6 @@ jobs:
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: summary-test
-          path: |
-            build/release-notes/changelog-source.md
-            build/release-notes/summary.md
-          if-no-files-found: ignore
+          path: build/release-notes/
+          if-no-files-found: error
           retention-days: 7

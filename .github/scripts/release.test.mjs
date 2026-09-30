@@ -229,6 +229,37 @@ test('reports token exhaustion without leaking reasoning text', async () => {
     assert.doesNotMatch(warnings[0], /private reasoning/);
 });
 
+test('accepts untranslatable Chinese proper nouns inside English prose', async () => {
+    for (const content of [
+        '### Other\n\n- Rename the Chinese display name to 等价升华:Neo (df06686).\n',
+        '### Fixes\n\n- Localize the mod display name (等价扩展:Neo) for Simplified Chinese players.\n',
+    ]) {
+        assert.equal(await summarize('commits', fallback, { ...options, fetchImpl: async () => response(content) }), content);
+    }
+});
+
+test('rejects Chinese prose even when individual lines keep English words', async () => {
+    const longChinese = '修复显示层级奥术转换终端等级燃料中继器收集器巨型之星转换接口凝聚器炼金箱奥术终端无限燃料能量之花转换显示层级'.repeat(3);
+    const warnings = [];
+    assert.equal(await summarize('commits', fallback, {
+        ...options,
+        warn: value => warnings.push(value),
+        fetchImpl: async () => response(`### Fixes\n\n- Fixed display issues ${longChinese}\n`),
+    }), fallback);
+    assert.match(warnings[0], /NON_ENGLISH_SUMMARY/);
+});
+
+test('reports rejected content to a capture callback for diagnostics', async () => {
+    const captured = [];
+    const result = await summarize('commits', fallback, {
+        ...options,
+        fetchImpl: async () => response('### Fixes\n- 修复显示层级'),
+        capture: (code, content) => captured.push({ code, content }),
+    });
+    assert.equal(result, fallback);
+    assert.deepEqual(captured, [{ code: 'NON_ENGLISH_SUMMARY', content: '### Fixes\n- 修复显示层级' }]);
+});
+
 test('diagnostics never echo arbitrary server or transport fields', async () => {
     const secret = 'test-only\n::error::untrusted message';
     for (const fetchImpl of [

@@ -123,6 +123,8 @@ Java 修改至少执行编译；涉及事务、燃料、注册或网络的修改
    兜底会产生 GitHub Actions warning，明确区分 `HTTP_ERROR`（含状态码）、`TIMEOUT`、`OUTPUT_TOKEN_LIMIT`、
    `MISSING_OUTPUT_TEXT`、`INVALID_HEADINGS` 等原因；token 耗尽时显示可用的输出及推理 token 数。
    不输出原始响应、推理内容、密钥或任意服务器错误文本。作业成功只表示发布成功，不代表 AI 摘要生成成功。
+   英文校验允许不可翻译的专有名词（如中文模组名）少量出现在英文句子中：
+   含中日韩文字的行仍必须有英文单词，全文中日韩字符不超过 40 个，否则判定为非英文摘要。
 5. 仅上传精确匹配当前版本的正式 JAR、源码 JAR 和 `SHA256SUMS`，不使用宽泛的 JAR 通配符。
    Release 安装说明明确要求 ProjectEF Neo 和 Fabric API，不将前置内嵌依赖误写成本扩展内嵌。
 6. 发布作业才获得 `contents: write`；它校验产物校验和及远端 tag 指向，且不执行项目构建或调用 AI。
