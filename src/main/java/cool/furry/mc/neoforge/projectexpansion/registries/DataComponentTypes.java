@@ -32,6 +32,23 @@ public class DataComponentTypes {
         }
     }
 
+    // Prepaid fractional EMC travels with the fuel so moving or reloading it cannot reset billing.
+    public record FuelCredit(int numerator, int denominator) {
+        public static final FuelCredit EMPTY = new FuelCredit(0, 1);
+        public static final Codec<FuelCredit> CODEC = RecordCodecBuilder.create(instance -> instance.group(
+                Codec.intRange(0, Integer.MAX_VALUE).fieldOf("numerator").forGetter(FuelCredit::numerator),
+                Codec.intRange(1, Integer.MAX_VALUE).fieldOf("denominator").forGetter(FuelCredit::denominator)
+        ).apply(instance, FuelCredit::new));
+        public static final StreamCodec<ByteBuf, FuelCredit> STREAM_CODEC = StreamCodec.composite(
+                ByteBufCodecs.VAR_INT, FuelCredit::numerator, ByteBufCodecs.VAR_INT, FuelCredit::denominator, FuelCredit::new);
+
+        public long rescale(int denominator) {
+            if (numerator < 0 || this.denominator <= 0) return 0;
+            return (long) Math.min(numerator, this.denominator - 1) * denominator / this.denominator;
+        }
+    }
+
+    public static final PEDeferredHolder<DataComponentType<?>, DataComponentType<FuelCredit>> FUEL_CREDIT = Registry.simple("fuel_credit", builder -> builder.persistent(FuelCredit.CODEC).networkSynchronized(FuelCredit.STREAM_CODEC));
     public static final PEDeferredHolder<DataComponentType<?>, DataComponentType<OwnerData>> OWNER = Registry.simple("uuid", (builder) -> builder.persistent(OwnerData.CODEC).networkSynchronized(OwnerData.STREAM_CODEC));
     public static final PEDeferredHolder<DataComponentType<?>, DataComponentType<CapabilityAlchemicalBookLocations.AlchemicalBookLocationData>> ALCHEMICAL_BOOK_LOCATIONS = Registry.simple("alchemical_book_locations", (builder) -> builder.persistent(CapabilityAlchemicalBookLocations.AlchemicalBookLocationData.CODEC).networkSynchronized(CapabilityAlchemicalBookLocations.AlchemicalBookLocationData.STREAM_CODEC));
 
