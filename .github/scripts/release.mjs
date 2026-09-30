@@ -86,10 +86,12 @@ export function fallbackSummary(repository, metadata, previousTag) {
 export async function summarize(source, fallback, {
     apiKey, model = 'deepseek-flash', fetchImpl = fetch, warn = console.warn,
 } = {}) {
-    if (!apiKey || Buffer.byteLength(source, 'utf8') > 60_000) {
-        warn('English fallback selected: API key missing or changelog too large; no API request was sent.');
+    const fail = (code, details = '') => {
+        warn(`::warning title=Release summary::${code}${details ? `: ${details}` : ''}. Using the English fallback.`);
         return fallback;
-    }
+    };
+    if (!apiKey) return fail('MISSING_API_KEY', 'no API request was sent');
+    if (Buffer.byteLength(source, 'utf8') > 60_000) return fail('INPUT_TOO_LARGE', 'no API request was sent');
     try {
         const response = await fetchImpl('https://api.deepseek.com/responses', {
             method: 'POST',
@@ -98,38 +100,68 @@ export async function summarize(source, fallback, {
                 model,
                 instructions: SYSTEM_PROMPT,
                 input: `Generate the English release notes from this commit history:\n\n${source}`,
-                max_output_tokens: 2048,
+                // Summarizing commits does not need a reasoning budget before the visible output.
+                reasoning: { effort: 'none' },
+                max_output_tokens: 4096,
                 stream: false,
             }),
             signal: AbortSignal.timeout(90_000),
             redirect: 'error',
         });
-        if (!response.ok) throw new Error('Unsuccessful API status');
-        const result = await response.json();
-        if (result?.status !== 'completed' || result.error != null || result.incomplete_details != null
-            || !Array.isArray(result.output)) {
-            throw new Error('Failed or incomplete response');
+        if (!response.ok) {
+            const status = Number.isInteger(response.status) && response.status >= 100 && response.status <= 599
+                ? response.status : 'unknown';
+            return fail('HTTP_ERROR', `status=${status}`);
         }
+        const result = await response.json();
+        // Log only known status values and numeric counters, never arbitrary API text.
+        const usage = [
+            ['output_tokens', result?.usage?.output_tokens],
+            ['reasoning_tokens', result?.usage?.output_tokens_details?.reasoning_tokens],
+        ].filter(([, value]) => Number.isSafeInteger(value) && value >= 0)
+            .map(([key, value]) => `${key}=${value}`).join(' ');
+        if (result?.incomplete_details?.reason === 'max_output_tokens') return fail('OUTPUT_TOKEN_LIMIT', usage);
+        if (result?.status !== 'completed') {
+            const status = ['incomplete', 'failed', 'cancelled', 'in_progress', 'queued'].includes(result?.status)
+                ? result.status : 'unknown';
+            return fail('RESPONSE_NOT_COMPLETED', `status=${status}${usage ? ` ${usage}` : ''}`);
+        }
+        if (result.error != null) return fail('API_ERROR');
+        if (result.incomplete_details != null) return fail('RESPONSE_INCOMPLETE', usage);
+        if (!Array.isArray(result.output)) return fail('INVALID_OUTPUT');
         // Reasoning items are not release text; only accept completed assistant messages.
         const messages = result.output.filter(item => item?.type === 'message');
-        if (!messages.length || messages.some(message => message.role !== 'assistant' || message.status !== 'completed'
-            || !Array.isArray(message.content) || !message.content.length
-            || message.content.some(part => part?.type !== 'output_text' || typeof part.text !== 'string'))) {
-            throw new Error('Missing, refused, or invalid output text');
+        if (!messages.length) return fail('MISSING_OUTPUT_TEXT', usage);
+        for (const message of messages) {
+            if (message.role !== 'assistant' || message.status !== 'completed') return fail('INVALID_MESSAGE');
+            if (!Array.isArray(message.content) || !message.content.length) return fail('MISSING_OUTPUT_TEXT', usage);
+            if (message.content.some(part => part?.type === 'refusal')) return fail('REFUSAL');
+            if (message.content.some(part => part?.type !== 'output_text' || typeof part.text !== 'string')) {
+                return fail('INVALID_OUTPUT_TEXT');
+            }
         }
-        const content = messages.map(message => message.content.map(part => part.text).join('')).join('\n');
+        let content = messages.map(message => message.content.map(part => part.text).join('')).join('\n').trim();
+        if (!content) return fail('EMPTY_SUMMARY', usage);
+        if (content.length > 20_000) return fail('SUMMARY_TOO_LONG');
+        if (/[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}]/u.test(content)) {
+            return fail('NON_ENGLISH_SUMMARY');
+        }
+        if (content.includes('```')) return fail('UNEXPECTED_CODE_FENCE');
+        // Heading depth and capitalization do not change the meaning of valid English notes.
+        content = content.split('\n').map(line => {
+            const title = line.match(/^\s*#{1,6}\s+(.+?)\s*#*\s*$/)?.[1].toLowerCase();
+            return HEADINGS.find(heading => heading.slice(4).toLowerCase() === title) ?? line;
+        }).join('\n');
         const headings = content.split('\n').filter(line => /^\s*#/.test(line));
-        if (!content.trim()
-            || content.length > 20_000 || !headings.length || headings.some(line => !HEADINGS.includes(line.trim()))
-            || /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}]/u.test(content)
-            || content.includes('```')) {
-            throw new Error('Invalid, incomplete, or non-English summary');
-        }
-        return `${content.trim()}\n`;
-    } catch {
-        // Never log response bodies or exception details that could contain credentials.
-        warn('Release summary generation failed validation or the API request failed; using the English fallback.');
-        return fallback;
+        if (!headings.length || headings.some(line => !HEADINGS.includes(line.trim()))) return fail('INVALID_HEADINGS');
+        return `${content}\n`;
+    } catch (error) {
+        // Exception messages, response bodies and headers may contain credentials or prompt text.
+        if (error?.name === 'TimeoutError' || error?.name === 'AbortError') return fail('TIMEOUT', 'request exceeded 90 seconds');
+        if (error instanceof SyntaxError) return fail('INVALID_JSON');
+        const code = ['UND_ERR_CONNECT_TIMEOUT', 'ETIMEDOUT', 'ENOTFOUND', 'ECONNRESET'].includes(error?.cause?.code)
+            ? error.cause.code : 'unknown';
+        return fail('TRANSPORT_ERROR', `code=${code}`);
     }
 }
 

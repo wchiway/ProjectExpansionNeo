@@ -128,7 +128,8 @@ test('requests English output, preserves full input, and accepts valid notes', a
             assert.match(payload.instructions, /entirely in English/);
             assert.match(payload.instructions, /untrusted data/);
             assert.ok(payload.input.endsWith(source));
-            assert.equal(payload.max_output_tokens, 2048);
+            assert.deepEqual(payload.reasoning, { effort: 'none' });
+            assert.equal(payload.max_output_tokens, 4096);
             assert.equal(payload.stream, false);
             assert.equal(Object.hasOwn(payload, 'messages'), false);
             assert.equal(Object.hasOwn(payload, 'max_tokens'), false);
@@ -156,40 +157,86 @@ test('uses the supported default model and assembles only assistant output text'
     assert.equal(result, '### Fixes\n\n- Keep counts visible.\n\n### Other\n\n- Update documentation.\n');
 });
 
-for (const [name, fetchImpl] of [
-    ['HTTP failure', async () => ({ ok: false })],
-    ['timeout', async () => { throw new Error('credential-containing transport error'); }],
-    ['invalid JSON', async () => ({ ok: true, json: async () => { throw new SyntaxError(); } })],
-    ['missing response fields', async () => ({ ok: true, json: async () => ({}) })],
-    ['legacy Chat Completions response', async () => ({ ok: true, json: async () => ({ choices: [{ message: { content: english }, finish_reason: 'stop' }] }) })],
-    ['empty content', async () => response('')],
-    ['non-string content', async () => response({ text: english })],
+test('normalizes harmless English heading depth and capitalization differences', async () => {
+    for (const heading of ['## Fixes', '### FIXES', '#### fixes', '### Fixes ###']) {
+        assert.equal(await summarize('commits', fallback, {
+            ...options, fetchImpl: async () => response(`${heading}\n\n- Fix display order.`),
+        }), '### Fixes\n\n- Fix display order.\n');
+    }
+});
+
+for (const [name, fetchImpl, code] of [
+    ['HTTP failure', async () => ({ ok: false, status: 401 }), 'HTTP_ERROR: status=401'],
+    ['timeout', async () => { throw new DOMException('credential-containing timeout', 'TimeoutError'); }, 'TIMEOUT'],
+    ['transport error', async () => { throw new Error('credential-containing transport error'); }, 'TRANSPORT_ERROR'],
+    ['invalid JSON', async () => ({ ok: true, json: async () => { throw new SyntaxError(); } }), 'INVALID_JSON'],
+    ['missing response fields', async () => ({ ok: true, json: async () => ({}) }), 'RESPONSE_NOT_COMPLETED'],
+    ['legacy Chat Completions response', async () => ({ ok: true, json: async () => ({ choices: [{ message: { content: english }, finish_reason: 'stop' }] }) }), 'RESPONSE_NOT_COMPLETED'],
+    ['empty content', async () => response(''), 'EMPTY_SUMMARY'],
+    ['non-string content', async () => response({ text: english }), 'INVALID_OUTPUT_TEXT'],
     ...['incomplete', 'failed', 'cancelled', 'in_progress', 'queued'].map(status => [
-        `${status} response`, async () => response(english, status),
+        `${status} response`, async () => response(english, status), `RESPONSE_NOT_COMPLETED: status=${status}`,
     ]),
-    ['response error', async () => outputResponse([outputMessage(english)], { error: { message: 'failed' } })],
-    ['incomplete details', async () => outputResponse([outputMessage(english)], { incomplete_details: { reason: 'max_output_tokens' } })],
-    ['missing output', async () => outputResponse(undefined)],
-    ['non-array output', async () => outputResponse({ text: english })],
-    ['reasoning without a message', async () => outputResponse([{ type: 'reasoning', content: [{ type: 'reasoning_text', text: english }] }])],
-    ['incomplete message', async () => outputResponse([outputMessage(english, 'incomplete')])],
-    ['non-assistant message', async () => outputResponse([{ ...outputMessage(english), role: 'user' }])],
-    ['empty message content', async () => outputResponse([{ ...outputMessage(english), content: [] }])],
+    ['response error', async () => outputResponse([outputMessage(english)], { error: { message: 'failed' } }), 'API_ERROR'],
+    ['incomplete details', async () => outputResponse([outputMessage(english)], { incomplete_details: { reason: 'max_output_tokens' } }), 'OUTPUT_TOKEN_LIMIT'],
+    ['missing output', async () => outputResponse(undefined), 'INVALID_OUTPUT'],
+    ['non-array output', async () => outputResponse({ text: english }), 'INVALID_OUTPUT'],
+    ['reasoning without a message', async () => outputResponse([{ type: 'reasoning', content: [{ type: 'reasoning_text', text: english }] }]), 'MISSING_OUTPUT_TEXT'],
+    ['incomplete message', async () => outputResponse([outputMessage(english, 'incomplete')]), 'INVALID_MESSAGE'],
+    ['non-assistant message', async () => outputResponse([{ ...outputMessage(english), role: 'user' }]), 'INVALID_MESSAGE'],
+    ['empty message content', async () => outputResponse([{ ...outputMessage(english), content: [] }]), 'MISSING_OUTPUT_TEXT'],
     ['refusal mixed with text', async () => outputResponse([{ ...outputMessage(english), content: [
         { type: 'output_text', text: english }, { type: 'refusal', refusal: 'Cannot comply.' },
-    ] }])],
-    ['Chinese content', async () => response('### Fixes\n- 修复显示层级')],
-    ['unexpected headings', async () => response('### 安装\n- Install the mod.')],
-    ['unstructured response', async () => response('Sorry, I cannot help.')],
-    ['code fences', async () => response(`\`\`\`markdown\n${english}\`\`\``)],
+    ] }]), 'REFUSAL'],
+    ['Chinese content', async () => response('### Fixes\n- 修复显示层级'), 'NON_ENGLISH_SUMMARY'],
+    ['unexpected headings', async () => response('### Installation\n- Install the mod.'), 'INVALID_HEADINGS'],
+    ['unstructured response', async () => response('Sorry, I cannot help.'), 'INVALID_HEADINGS'],
+    ['code fences', async () => response(`\`\`\`markdown\n${english}\`\`\``), 'UNEXPECTED_CODE_FENCE'],
 ]) {
-    test(`${name} produces a safe English fallback without logging the response`, async () => {
+    test(`${name} produces a safe English fallback with a specific diagnostic`, async () => {
         const warnings = [];
         assert.equal(await summarize('commits', fallback, { ...options, fetchImpl, warn: value => warnings.push(value) }), fallback);
         assert.equal(warnings.length, 1);
+        assert.ok(warnings[0].startsWith(`::warning title=Release summary::${code}`));
         assert.doesNotMatch(warnings[0], /credential-containing|test-only/);
     });
 }
+
+test('reports token exhaustion without leaking reasoning text', async () => {
+    const warnings = [];
+    const result = await summarize('commits', fallback, {
+        ...options,
+        warn: value => warnings.push(value),
+        fetchImpl: async () => outputResponse([
+            { type: 'reasoning', content: [{ type: 'reasoning_text', text: 'private reasoning' }] },
+        ], {
+            status: 'incomplete', incomplete_details: { reason: 'max_output_tokens' },
+            usage: { output_tokens: 2048, output_tokens_details: { reasoning_tokens: 2048 } },
+        }),
+    });
+    assert.equal(result, fallback);
+    assert.match(warnings[0], /OUTPUT_TOKEN_LIMIT: output_tokens=2048 reasoning_tokens=2048/);
+    assert.doesNotMatch(warnings[0], /private reasoning/);
+});
+
+test('diagnostics never echo arbitrary server or transport fields', async () => {
+    const secret = 'test-only\n::error::untrusted message';
+    for (const fetchImpl of [
+        async () => ({ ok: false, status: secret }),
+        async () => outputResponse([], { status: secret }),
+        async () => outputResponse([], { error: { code: secret, message: secret } }),
+        async () => outputResponse([], {
+            incomplete_details: { reason: secret },
+            usage: { output_tokens: secret, output_tokens_details: { reasoning_tokens: secret } },
+        }),
+        async () => { throw new Error(secret, { cause: { code: secret } }); },
+    ]) {
+        const warnings = [];
+        assert.equal(await summarize('commits', fallback, { ...options, fetchImpl, warn: value => warnings.push(value) }), fallback);
+        assert.equal(warnings.length, 1);
+        assert.doesNotMatch(warnings[0], /test-only|untrusted|\n|::error::/);
+    }
+});
 
 test('verifies the packaged mod ID, expanded version, and Minecraft version', () => {
     const mod = { id: 'projectexpansion', version: metadata.artifactVersion, depends: { minecraft: '1.21.1' } };
