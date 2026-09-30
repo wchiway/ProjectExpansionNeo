@@ -100,6 +100,16 @@ test('finds the nearest compatible release and excludes unrelated tags and older
     assert.match(changelog.source, /Add English README/);
 });
 
+test('collects changelog for an explicit revision such as an existing tag', t => {
+    const { cwd, git, commit } = repository(t);
+    commit('Tagged change');
+    git('tag', metadata.tag);
+    commit('Later change');
+    const changelog = collectChangelog(metadata, cwd, git('rev-parse', `refs/tags/${metadata.tag}^{commit}`));
+    assert.match(changelog.source, /Tagged change/);
+    assert.doesNotMatch(changelog.source, /Later change/);
+});
+
 test('fallback is English and links the relevant history instead of copying commits', () => {
     assert.match(fallback, /\/compare\/1\.21\.1-1\.0\.6\.\.\.1\.21\.1-1\.1\.0/);
     assert.match(fallbackSummary('example/mod', metadata, ''), /\/commits\/1\.21\.1-1\.1\.0/);

@@ -54,17 +54,17 @@ export function validateCheckout(metadata, cwd) {
     return commit;
 }
 
-export function collectChangelog(metadata, cwd) {
+export function collectChangelog(metadata, cwd, rev = 'HEAD') {
     let previousTag = '';
     // The first commit has no parent and therefore no previous release.
-    if (git(['rev-list', '--parents', '-n', '1', 'HEAD'], cwd).split(' ').length > 1) {
-        const tags = git(['tag', '--merged', 'HEAD^'], cwd).split('\n').filter(tag => {
+    if (git(['rev-list', '--parents', '-n', '1', rev], cwd).split(' ').length > 1) {
+        const tags = git(['tag', '--merged', `${rev}^`], cwd).split('\n').filter(tag => {
             const version = tag.startsWith(`${metadata.minecraft}-`)
                 ? tag.slice(metadata.minecraft.length + 1) : tag.replace(/^v/, '');
             return SEMVER.test(version);
         });
         if (tags.length) {
-            previousTag = git(['describe', '--tags', '--abbrev=0', ...tags.flatMap(tag => ['--match', tag]), 'HEAD^'], cwd);
+            previousTag = git(['describe', '--tags', '--abbrev=0', ...tags.flatMap(tag => ['--match', tag]), `${rev}^`], cwd);
         }
     }
     const range = previousTag ? `${previousTag}..${metadata.tag}` : metadata.tag;
@@ -201,13 +201,39 @@ ${rows}
 async function main() {
     const cwd = process.cwd();
     const metadata = releaseMetadata(parseProperties(readFileSync('gradle.properties', 'utf8')), process.env.RELEASE_TAG);
+    const mode = process.argv[2];
+    // Diagnostics mode: regenerate the summary for an existing tag with the current tooling.
+    // It never builds, stages, or publishes; the live API call reproduces the release-time request.
+    if (mode === 'summary-test') {
+        const repository = process.env.GITHUB_REPOSITORY;
+        if (!/^[\w.-]+\/[\w.-]+$/.test(repository ?? '')) throw new Error('Invalid GITHUB_REPOSITORY');
+        const tagCommit = git(['rev-parse', '--verify', `refs/tags/${metadata.tag}^{commit}`], cwd);
+        const { previousTag, source } = collectChangelog(metadata, cwd, tagCommit);
+        mkdirSync('build/release-notes', { recursive: true });
+        writeFileSync('build/release-notes/changelog-source.md', source);
+        const fallback = fallbackSummary(repository, metadata, previousTag);
+        const summary = await summarize(source, fallback, {
+            apiKey: process.env.DEEPSEEK_API_KEY,
+            model: process.env.DEEPSEEK_MODEL || 'deepseek-flash',
+        });
+        writeFileSync('build/release-notes/summary.md', summary);
+        if (process.env.GITHUB_STEP_SUMMARY) {
+            appendFileSync(process.env.GITHUB_STEP_SUMMARY, `### Release summary for ${metadata.tag}\n\n${summary}\n`);
+        }
+        console.log('---- generated summary ----');
+        console.log(summary.trim());
+        if (summary === fallback) {
+            throw new Error('Summary generation fell back; see the warning above for the failure code.');
+        }
+        return;
+    }
     const commit = validateCheckout(metadata, cwd);
-    if (process.argv[2] === 'metadata') {
+    if (mode === 'metadata') {
         if (!process.env.GITHUB_OUTPUT) throw new Error('GITHUB_OUTPUT is required');
         appendFileSync(process.env.GITHUB_OUTPUT, `tag=${metadata.tag}\ncommit=${commit}\nmain_jar=${metadata.mainJar}\nsources_jar=${metadata.sourcesJar}\n`);
         return;
     }
-    if (process.argv[2] !== 'notes') throw new Error('Usage: node release.mjs metadata|notes');
+    if (mode !== 'notes') throw new Error('Usage: node release.mjs metadata|notes|summary-test');
     const repository = process.env.GITHUB_REPOSITORY;
     if (!/^[\w.-]+\/[\w.-]+$/.test(repository ?? '')) throw new Error('Invalid GITHUB_REPOSITORY');
 

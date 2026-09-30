@@ -1,0 +1,54 @@
+name: Release summary test
+
+# Temporary live diagnostics for the DeepSeek summary pipeline; runs only on this debug branch.
+on:
+  push:
+    branches:
+      - debug/deepseek-summary
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-summary-test
+  cancel-in-progress: true
+
+jobs:
+  test-summary:
+    name: Generate release summary with the live API
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      RELEASE_TAG: 1.21.1-1.1.0
+    steps:
+      - name: Check out the debug branch with full history
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '24'
+
+      - name: Test release tooling
+        run: node --test .github/scripts/release.test.mjs
+
+      - name: Generate the real release summary
+        env:
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+          DEEPSEEK_MODEL: ${{ vars.DEEPSEEK_MODEL || 'deepseek-flash' }}
+        run: node .github/scripts/release.mjs summary-test
+
+      - name: Upload summary diagnostics
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: summary-test
+          path: |
+            build/release-notes/changelog-source.md
+            build/release-notes/summary.md
+          if-no-files-found: ignore
+          retention-days: 7
