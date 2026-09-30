@@ -1,6 +1,6 @@
 # 等价升华:Neo 开发指南
 
-本文件介绍构建、开发与验证流程。模组功能和安装说明见 [README](README.md)。
+本文件介绍构建、开发与验证流程。模组功能和安装说明见 [English README](README.md) / [中文 README](README.zh-CN.md)。
 
 ## 开发环境
 
@@ -16,27 +16,27 @@
 | Fabric Loader | 0.16.14 |
 | Fabric API | 0.116.14+1.21.1 |
 | Fabric Loom | 1.10.5 |
-| ProjectEF Neo | 1.3.0（本地 JAR） |
+| ProjectEF Neo | 1.3.1（GitHub Release） |
 
 普通构建使用已跟踪的生成资源，不需要 Node.js；重新生成资源时才需要 Bash、Node.js 和 npm。
 
 ## 构建
 
-默认读取同级 ProjectEF Neo 项目的构建产物：
+默认由 Gradle 从 [ProjectEF 的 GitHub Releases](https://github.com/wchiway/ProjectEF/releases/latest)
+下载前置模组，不需要检出或构建同级 `ProjectE` 项目。
+当前使用最新 Release **1.3.1** 的完整包 `ProjectEF-1.21.1-PE1.3.1.jar`，不是 `-api.jar` 或 `-sources.jar`。
 
-```text
-MC_Mod/
-├── ProjectE/build/libs/ProjectEF-1.21.1-PE1.3.0.jar
-└── ProjectExpansionNeo/
-```
-
-先构建 ProjectEF Neo，再在本项目根目录执行：
+直接在本项目根目录执行：
 
 ```sh
 ./gradlew build
 ```
 
-也可以指定其他位置的前置 JAR：
+Release 版本由 `gradle.properties` 中的 `projectef_version` 固定，避免同一份源码的依赖随时间变化。
+后续升级时，先检查最新 Release 是否仍适用于 Minecraft 1.21.1 / Fabric，再更新该属性。
+下载和重映射缓存均保存在项目内；首次构建需要联网，依赖缓存完整后可使用 `./gradlew build --offline`。
+
+仅在本地调试前置模组时，可显式覆盖默认 Release 依赖：
 
 ```sh
 ./gradlew build -Pprojectef_jar=/path/to/ProjectEF.jar

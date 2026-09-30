@@ -1,42 +1,45 @@
-# 等价升华:Neo（ProjectExpansionNeo）
+[ProjectExpansionNeo](README.md) › **English** / [简体中文](README.zh-CN.md)
 
-**等价升华:Neo**（英文名 **ProjectExpansionNeo**）是面向 **Minecraft 1.21.1 / Fabric** 的 ProjectEF Neo 扩展，
-由 Project Expansion 的 NeoForge 版本迁移而来，为 EMC 的生产、存储与自动化提供更多选择。
+# ProjectExpansionNeo
 
-## 主要内容
+**ProjectExpansionNeo** is an expansion for **ProjectEF Neo** on **Minecraft 1.21.1 / Fabric**.
+Ported from the NeoForge version of Project Expansion, it adds more options for EMC generation, storage, and automation.
 
-- **EMC 生产**：更多等级的 EMC 收集器、能量中继器和能量之花。
-- **EMC 存储与自动化**：巨型之星、EMC 链接、转换接口和能量凝聚器 MK3。
-- **收纳与实用工具**：高级炼金箱、炼金书、奥术转换终端和无限燃料。
+## Features
 
-## 安装
+- **EMC generation:** Higher-tier energy collectors, relays, and power flowers.
+- **EMC storage and automation:** Large EMC stars, EMC links, transmutation interfaces, and the Energy Condenser MK3.
+- **Storage and utilities:** Advanced alchemical chests, alchemical books, the Arcane Transmutation Tablet, and infinite fuel.
 
-使用 Minecraft 1.21.1、Java 21 和 Fabric Loader 0.16.9 或更高版本，
-并在实例的 `mods/` 目录中放入：
+## Installation
 
-- Fabric API。
-- ProjectEF Neo 1.3.0 或更高版本。
-- `ProjectExpansionNeo-1.21.1-1.1.0.jar`。
+Use Minecraft 1.21.1, Java 21, and Fabric Loader 0.16.9 or later.
+Place the following in your instance's `mods/` directory:
 
-Fabric API 需要选择适用于 Minecraft 1.21.1 的版本。
-ProjectEF Neo 内嵌提供 Forge Config API Port 和权限库，无需单独安装。
+- Fabric API for Minecraft 1.21.1.
+- The full Minecraft 1.21.1 / Fabric JAR from the [latest ProjectEF Neo release](https://github.com/wchiway/ProjectEF/releases/latest).
+- `ProjectExpansionNeo-1.21.1-1.1.0.jar`.
 
-## 可选集成
+Choose the regular ProjectEF JAR, such as `ProjectEF-1.21.1-PE1.3.1.jar`, **not** the `-api.jar` or `-sources.jar` asset.
+ProjectEF Neo bundles Forge Config API Port and the permissions library; you do not need to install them separately.
 
-支持 JEI、EMI、Jade、WTHIT 和 Trinkets。
-Trinkets 提供专用转换终端槽位，替代原 Curios 集成；本 Fabric 版本不包含 TOP 集成。
+## Optional integrations
 
-## 配置与兼容性
+Supported integrations include JEI, EMI, Jade, WTHIT, and Trinkets.
+Trinkets provides a dedicated transmutation tablet slot in place of the former Curios integration.
+TOP integration is not included in this Fabric version.
 
-服务器和客户端配置沿用 TOML 格式。模组 ID 保持为 `projectexpansion`。
-旧版 NeoForge 存档跨加载器迁移尚未验证。
+## Configuration and compatibility
 
-构建、开发环境、资源生成和测试说明见 [开发指南](DEV.md)。
+Server and client configuration files continue to use TOML. The mod ID remains `projectexpansion`.
+Migrating existing NeoForge worlds across loaders has not been verified.
 
-## 项目来源
+See the [development guide (Chinese)](DEV.md) for building, development setup, resource generation, and testing.
 
-- [上游 Project Expansion](https://github.com/DonovanDMC/ProjectExpansion)
+## Project origins
+
+- [Upstream Project Expansion](https://github.com/DonovanDMC/ProjectExpansion)
 - [ProjectEF](https://github.com/wchiway/ProjectEF)
 
-本项目保留上游代码、资源与作者署名，采用 [MIT 许可证](LICENSE)。
-这是非官方扩展，不由 ProjectE 原项目提供支持。
+This project retains upstream code, assets, and author attribution and is licensed under the [MIT License](LICENSE).
+It is an unofficial expansion and is not supported by the original ProjectE project.

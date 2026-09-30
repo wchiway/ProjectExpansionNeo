@@ -23,11 +23,25 @@ repositories {
     maven { url = 'https://maven2.bai.lol' }
     maven { url = 'https://jitpack.io' }
     maven { url = 'https://raw.githubusercontent.com/Fuzss/modresources/main/maven/' }
+    exclusiveContent {
+        forRepository {
+            ivy {
+                name = 'ProjectEFReleases'
+                url = 'https://github.com/wchiway/ProjectEF/releases/download'
+                patternLayout {
+                    artifact "[revision]/[artifact]-${minecraft_version}-PE[revision](-[classifier]).[ext]"
+                }
+                metadataSources { artifact() }
+            }
+        }
+        filter { includeModule('com.github.wchiway', 'ProjectEF') }
+    }
 }
 
-def projectefJar = file(providers.gradleProperty('projectef_jar').get())
-if (!projectefJar.isFile()) {
-    throw new GradleException("Build ProjectEF Neo first, or supply -Pprojectef_jar=/path/to/ProjectEF.jar. Missing: ${projectefJar}")
+// Local builds are opt-in; the default dependency comes from GitHub Releases.
+def projectefJarOverride = providers.gradleProperty('projectef_jar').orNull
+if (projectefJarOverride != null && !file(projectefJarOverride).isFile()) {
+    throw new GradleException("The supplied -Pprojectef_jar does not exist: ${projectefJarOverride}")
 }
 
 dependencies {
@@ -38,11 +52,15 @@ dependencies {
     }
     modImplementation "net.fabricmc:fabric-loader:${loader_version}"
     modImplementation "net.fabricmc.fabric-api:fabric-api:${fabric_version}"
-    modImplementation files(projectefJar)
+    if (projectefJarOverride != null) {
+        modImplementation files(file(projectefJarOverride))
+    } else {
+        modImplementation "com.github.wchiway:ProjectEF:${projectef_version}"
+    }
     modImplementation "fuzs.forgeconfigapiport:forgeconfigapiport-fabric:${fcap_version}"
     modImplementation "me.lucko:fabric-permissions-api:${permissions_api_version}"
     compileOnly 'com.google.code.findbugs:jsr305:3.0.2'
-    // Loom's development remap does not expose libraries nested inside the local ProjectEF JAR.
+    // Loom's development remap does not expose libraries nested inside the ProjectEF JAR.
     runtimeOnly 'org.apache.commons:commons-math3:3.6.1'
     runtimeOnly 'com.github.Towdium:PinIn:1.6.0'
 
