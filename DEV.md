@@ -88,6 +88,51 @@ Loom 的开发环境重映射无法完整暴露前置 JAR 的内嵌库，因此�
 Java 修改至少执行编译；涉及事务、燃料、注册或网络的修改按需运行 GameTest。
 编译通过不能代替游戏内行为验证。纯文档修改无需启动游戏。
 
+## GitHub Release 发布
+
+发布工作流位于 [`.github/workflows/release.yml`](.github/workflows/release.yml)，
+从同级 ProjectE 的 Release 工作流迁移，保留 DeepSeek 更新日志生成功能。
+发布辅助逻辑在 [`.github/scripts/release.mjs`](.github/scripts/release.mjs)，使用 Node.js 24 内置 API，不需要安装 npm 依赖。
+
+### 配置与触发
+
+- 在仓库 **Settings → Secrets and variables → Actions** 中设置 Secret `DEEPSEEK_API_KEY`，启用英文 AI 更新日志。
+  可选的 Repository Variable `DEEPSEEK_MODEL` 覆盖模型名，默认沿用源工作流的 `deepseek-v4-flash`。
+  设置密钥后，工作流会将发布范围内的提交标题发送到 DeepSeek；不会发送源代码、差异或密钥内容。
+- 推荐使用 `<minecraft_version>-<mod_version>` 格式的 tag，例如 `1.21.1-1.1.0`，与发布 JAR 和 `updates.json` 的格式一致。
+  同时兼容 `1.1.0` 和 `v1.1.0`，不支持预发布后缀；每次版本只选择一种 tag 格式。
+- 推送匹配格式的 tag 会自动触发。也可以在 Actions 的 **Release → Run workflow** 中，
+  将 `version` 填为**已存在**的 tag。工作流不会创建 tag；目标 tag 必须包含本工作流和辅助脚本。
+- 发布前先更新 `gradle.properties` 的 `mod_version`，同步维护 README 中的安装示例及 `updates.json`。
+  工作流会核对 tag、Minecraft 版本、源码提交及 JAR 内的 `fabric.mod.json`，不一致时停止发布。
+
+### 发布流程与保护
+
+1. 只读构建作业使用 Java 21、项目 Gradle Wrapper 和 `.gradle_home/` 缓存。
+   Gradle Action 校验 Wrapper，并管理依赖缓存；配置缓存不会在未配置加密密钥时上传。
+   tag 缓存只能供同一 tag 的重跑使用，不能在不同 tag 之间共享。
+2. 执行完整 `build` 和无界面 GameTest；任一步失败都不会发布。测试报告保留 14 天。
+3. 从最近的祖先发布 tag 收集提交；首次发布使用完整历史。忽略无关 tag 和其他 Minecraft 版本的复合 tag。
+   DeepSeek 提示词与 Release 的安装说明、文件说明统一使用英文。
+4. 未设置密钥、输入过大、请求超时、HTTP 错误或响应无效时，使用英文兜底说明及提交历史链接，
+   **不直接复制可能为中文的提交消息**。超时为 90 秒；空内容、截断响应和含中日韩文字的结果不会作为 AI 摘要发布。
+5. 仅上传精确匹配当前版本的正式 JAR、源码 JAR 和 `SHA256SUMS`，不使用宽泛的 JAR 通配符。
+   Release 安装说明明确要求 ProjectEF Neo 和 Fabric API，不将前置内嵌依赖误写成本扩展内嵌。
+6. 发布作业才获得 `contents: write`；它校验产物校验和及远端 tag 指向，且不执行项目构建或调用 AI。
+   已存在的 Release 不会被覆盖。同一 tag 的发布串行执行，不中断正在发布的运行。
+
+原始提交来源和最终摘要作为 Actions artifact 保留 14 天，发布包保留 7 天；不会保存 API 请求、响应或密钥。
+如果同一发布已经成功，重跑会因 Release 已存在而失败；修改已发布内容需单独人工处理。
+
+仅检查发布逻辑、不调用 AI 或创建 Release：
+
+```sh
+node --test .github/scripts/release.test.mjs
+actionlint .github/workflows/release.yml
+```
+
+本地修改工作流不会自动推送 tag、触发远端 Actions 或创建 Release。
+
 ## 资源生成
 
 生成器和模板位于 `src/main/generation/`，生成结果位于 `src/generated/resources/`。

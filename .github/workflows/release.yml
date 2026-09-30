@@ -1,0 +1,147 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - '[0-9]+.[0-9]+.[0-9]+-[0-9]+.[0-9]+.[0-9]+'
+      - '[0-9]+.[0-9]+.[0-9]+'
+      - 'v[0-9]+.[0-9]+.[0-9]+'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Existing release tag (recommended: 1.21.1-1.1.0)'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.event_name == 'workflow_dispatch' && inputs.version || github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build, test, and prepare release
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      GRADLE_USER_HOME: ${{ github.workspace }}/.gradle_home
+      RELEASE_TAG: ${{ github.event_name == 'workflow_dispatch' && inputs.version || github.ref_name }}
+    outputs:
+      tag: ${{ steps.release.outputs.tag }}
+      commit: ${{ steps.release.outputs.commit }}
+      main_jar: ${{ steps.release.outputs.main_jar }}
+      sources_jar: ${{ steps.release.outputs.sources_jar }}
+    steps:
+      - name: Check out the release tag
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: refs/tags/${{ env.RELEASE_TAG }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '24'
+
+      - name: Test release tooling
+        run: node --test .github/scripts/release.test.mjs
+
+      - name: Validate tag, version, and checkout
+        id: release
+        run: node .github/scripts/release.mjs metadata
+
+      - name: Set up Java 21
+        uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3 # v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Set up Gradle caching and validate the wrapper
+        uses: gradle/actions/setup-gradle@ed408507eac070d1f99cc633dbcf757c94c7933a # v4
+        with:
+          # Release tags may save caches for reruns; other tags cannot restore them.
+          cache-read-only: false
+
+      - name: Build release JARs
+        run: ./gradlew build --no-daemon --stacktrace
+
+      - name: Run headless GameTests
+        run: ./gradlew -Pgametest -Precipe_viewer=none runGameTestServer --no-daemon --stacktrace
+
+      - name: Upload test reports
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: release-test-reports
+          path: |
+            build/gametest-results.xml
+            build/gametest/logs/latest.log
+            build/reports/tests/
+          if-no-files-found: ignore
+          retention-days: 14
+
+      - name: Generate English release notes and stage verified assets
+        env:
+          DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+          DEEPSEEK_MODEL: ${{ vars.DEEPSEEK_MODEL || 'deepseek-v4-flash' }}
+        run: node .github/scripts/release.mjs notes
+
+      - name: Upload changelog diagnostics
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: release-changelog
+          path: |
+            build/release-notes/changelog-source.md
+            build/release-notes/summary.md
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Upload release package
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: release-package
+          path: build/release/
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 7
+
+  publish:
+    name: Publish GitHub Release
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - name: Download verified release package
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: release-package
+          path: release
+
+      - name: Verify and publish
+        working-directory: release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ needs.build.outputs.tag }}
+          RELEASE_COMMIT: ${{ needs.build.outputs.commit }}
+          MAIN_JAR: ${{ needs.build.outputs.main_jar }}
+          SOURCES_JAR: ${{ needs.build.outputs.sources_jar }}
+        run: |
+          sha256sum --check SHA256SUMS
+          # Detect a tag moved between checkout and publication, including annotated tags.
+          remote_commit="$(gh api "repos/${GH_REPO}/commits/${RELEASE_TAG}" --jq '.sha')"
+          if [[ "$remote_commit" != "$RELEASE_COMMIT" ]]; then
+              printf '%s\n' '::error::The release tag no longer points to the tested commit.'
+              exit 1
+          fi
+          # Never overwrite an existing release or create a tag implicitly.
+          gh release create "$RELEASE_TAG" \
+              --verify-tag \
+              --title "ProjectExpansionNeo $RELEASE_TAG" \
+              --notes-file release-body.md \
+              "$MAIN_JAR" "$SOURCES_JAR" SHA256SUMS
