@@ -18,7 +18,7 @@
 
 - 适用于 Minecraft 1.21.1 的 Fabric API。
 - [ProjectEF Neo 最新 Release](https://github.com/wchiway/ProjectEF/releases/latest) 中适用于 Minecraft 1.21.1 / Fabric 的完整 JAR。
-- `ProjectExpansionNeo-1.21.1-1.1.0.jar`。
+- `ProjectExpansionNeo-1.21.1-1.1.1.jar`。
 
 选择普通的 ProjectEF JAR，例如 `ProjectEF-1.21.1-PE1.3.1.jar`，**不要**下载 `-api.jar` 或 `-sources.jar` 作为游戏模组安装。
 ProjectEF Neo 内嵌提供 Forge Config API Port 和权限库，无需单独安装。

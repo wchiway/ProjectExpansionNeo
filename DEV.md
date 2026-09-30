@@ -43,7 +43,7 @@ Release 版本由 `gradle.properties` 中的 `projectef_version` 固定，避免
 ```
 
 本指南中的命令均从项目根目录执行；Windows 将 `./gradlew` 替换为 `gradlew.bat`。
-可安装的产物位于 `build/libs/ProjectExpansionNeo-1.21.1-1.1.0.jar`，
+可安装的产物位于 `build/libs/ProjectExpansionNeo-1.21.1-1.1.1.jar`，
 `-sources.jar` 为源码包。文件名中的版本由 `gradle.properties` 决定。
 
 两个 Wrapper 启动脚本都将 `GRADLE_USER_HOME` 固定为项目内的 **`.gradle_home/`**。
@@ -102,8 +102,8 @@ Java 修改至少执行编译；涉及事务、燃料、注册或网络的修改
   可选的 Repository Variable `DEEPSEEK_MODEL` 覆盖模型名，默认使用该接口文档列出的 `deepseek-flash`。
   只提取已完成的 assistant 消息中的 `output_text`，不把 reasoning 内容作为发布正文；拒绝或未完成的响应使用英文兜底。
   设置密钥后，工作流会将发布范围内的提交标题发送到 DeepSeek；不会发送源代码、差异或密钥内容。
-- 推荐使用 `<minecraft_version>-<mod_version>` 格式的 tag，例如 `1.21.1-1.1.0`，与发布 JAR 和 `updates.json` 的格式一致。
-  同时兼容 `1.1.0` 和 `v1.1.0`，不支持预发布后缀；每次版本只选择一种 tag 格式。
+- 推荐使用 `<minecraft_version>-<mod_version>` 格式的 tag，例如 `1.21.1-1.1.1`，与发布 JAR 和 `updates.json` 的格式一致。
+  同时兼容 `1.1.1` 和 `v1.1.1`，不支持预发布后缀；每次版本只选择一种 tag 格式。
 - 推送匹配格式的 tag 会自动触发。也可以在 Actions 的 **Release → Run workflow** 中，
   将 `version` 填为**已存在**的 tag。工作流不会创建 tag；目标 tag 必须包含本工作流和辅助脚本。
 - 发布前先更新 `gradle.properties` 的 `mod_version`，同步维护 README 中的安装示例及 `updates.json`。
