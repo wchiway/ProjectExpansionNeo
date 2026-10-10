@@ -28,6 +28,10 @@ import org.lwjgl.glfw.GLFW;
 import java.math.BigInteger;
 
 public class GUIArcaneTransmutationTablet extends PEContainerScreen<ContainerArcaneTransmutationTablet> {
+    private static final int CRAFTING_PANEL_X = -75;
+    private static final int CRAFTING_PANEL_Y = 10;
+    private static final int CRAFTING_PANEL_WIDTH = 76;
+    private static final int CRAFTING_PANEL_HEIGHT = 89;
     public static final ResourceLocation texture = Main.rl("textures/gui/arcane_transmutation_tablet.png");
     // public static final ResourceLocation texture = Main.rl("textures/gui/arcane_transmutation_tablet_layout.png");
 
@@ -103,6 +107,16 @@ public class GUIArcaneTransmutationTablet extends PEContainerScreen<ContainerArc
     }
 
     @Override
+    protected boolean hasClickedOutside(double mouseX, double mouseY, int left, int top, int mouseButton) {
+        // The crafting panel extends beyond the main image, but must not act as a drop area.
+        boolean insideCraftingPanel = mouseX >= left + CRAFTING_PANEL_X
+                && mouseX < left + CRAFTING_PANEL_X + CRAFTING_PANEL_WIDTH
+                && mouseY >= top + CRAFTING_PANEL_Y
+                && mouseY < top + CRAFTING_PANEL_Y + CRAFTING_PANEL_HEIGHT;
+        return !insideCraftingPanel && super.hasClickedOutside(mouseX, mouseY, left, top, mouseButton);
+    }
+
+    @Override
     public void resize(Minecraft minecraft, int width, int height) {
         String filter = this.textBoxFilter.getValue();
         init(minecraft, width, height);
@@ -127,7 +141,8 @@ public class GUIArcaneTransmutationTablet extends PEContainerScreen<ContainerArc
     @Override
     protected void renderBg(GuiGraphics graphics, float partialTicks, int mouseX, int mouseY) {
         graphics.blit(texture, leftPos, topPos, 0, 0, imageWidth, imageHeight);
-        graphics.blit(texture, leftPos - 75, topPos + 10, 180, 32, 76, 89);
+        graphics.blit(texture, leftPos + CRAFTING_PANEL_X, topPos + CRAFTING_PANEL_Y,
+                180, 32, CRAFTING_PANEL_WIDTH, CRAFTING_PANEL_HEIGHT);
         this.textBoxFilter.render(graphics, mouseX, mouseY, partialTicks);
 
         renderIfHovered(graphics, mouseX, mouseY, previous, 196, 0);

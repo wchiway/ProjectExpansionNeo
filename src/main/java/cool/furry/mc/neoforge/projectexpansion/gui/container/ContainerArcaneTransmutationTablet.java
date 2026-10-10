@@ -329,8 +329,8 @@ public class ContainerArcaneTransmutationTablet extends PEHandContainer {
             }
 
             result.setItem(0, stack);
-            menu.setRemoteSlot(0, stack);
-            serverPlayer.connection.send(new ClientboundContainerSetSlotPacket(menu.containerId, menu.incrementStateId(), 0, stack));
+            menu.setRemoteSlot(RESULT, stack);
+            serverPlayer.connection.send(new ClientboundContainerSetSlotPacket(menu.containerId, menu.incrementStateId(), RESULT, stack));
         }
     }
 
