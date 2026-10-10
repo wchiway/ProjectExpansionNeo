@@ -11,11 +11,19 @@ import net.minecraft.world.item.ItemStack;
 public final class ClientSmokeTest implements ClientModInitializer {
     private int ticks;
     private boolean complete;
+    private ArcaneTabletClientSmokeTest arcaneTabletTest;
 
     @Override
     public void onInitializeClient() {
         if (!Boolean.getBoolean("projectexpansion.clientSmoke")) return;
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
+            if (arcaneTabletTest != null && !complete) {
+                if (arcaneTabletTest.tick(client)) {
+                    complete = true;
+                    client.stop();
+                }
+                return;
+            }
             if (complete || ++ticks < 100 || client.getOverlay() != null || client.screen == null) return;
             if (!Keybinds.REGISTERED) throw new IllegalStateException("Project Expansion key binding was not registered");
             int models = 0;
@@ -29,8 +37,7 @@ public final class ClientSmokeTest implements ClientModInitializer {
             }
             if (models == 0) throw new IllegalStateException("No Project Expansion items loaded");
             Main.Logger.info("PROJECTEXPANSION CLIENT SMOKE PASSED: {} item models and client initialization", models);
-            complete = true;
-            client.stop();
+            arcaneTabletTest = new ArcaneTabletClientSmokeTest();
         });
     }
 }

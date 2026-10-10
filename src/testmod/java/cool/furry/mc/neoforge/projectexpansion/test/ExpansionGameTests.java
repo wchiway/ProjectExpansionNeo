@@ -7,6 +7,7 @@ import cool.furry.mc.neoforge.projectexpansion.util.Matter;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.RoundingMode;
+import java.util.ArrayList;
 import moze_intel.projecte.api.capabilities.PECapabilities;
 import moze_intel.projecte.api.proxy.IEMCProxy;
 import net.fabricmc.fabric.api.gametest.v1.FabricGameTest;
@@ -20,7 +21,14 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.network.Connection;
+import net.minecraft.network.protocol.Packet;
+import net.minecraft.network.protocol.PacketFlow;
+import net.minecraft.network.protocol.game.ClientboundContainerSetSlotPacket;
+import net.minecraft.server.network.CommonListenerCookie;
+import net.minecraft.server.network.ServerGamePacketListenerImpl;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.material.Fluids;
@@ -61,6 +69,54 @@ public class ExpansionGameTests implements FabricGameTest {
             test.assertTrue(menu.hand == null && menu.stillValid(player), "Accessory menu does not require a held tablet");
             test.succeed();
         } finally {
+            player.closeContainer();
+            test.getLevel().getServer().getPlayerList().remove(player);
+        }
+    }
+
+    @GameTest(template = EMPTY_STRUCTURE)
+    public void arcaneTabletCraftingClicksAndResultSync(GameTestHelper test) {
+        var player = test.makeMockServerPlayerInLevel();
+        var connection = player.connection;
+        try {
+            cool.furry.mc.neoforge.projectexpansion.registries.Items.ARCANE_TRANSMUTATION_TABLET.get().openContainer(player);
+            var menu = (ContainerArcaneTransmutationTablet) player.containerMenu;
+            var updates = new ArrayList<ClientboundContainerSetSlotPacket>();
+            player.connection = new ServerGamePacketListenerImpl(test.getLevel().getServer(),
+                    new Connection(PacketFlow.SERVERBOUND), player, CommonListenerCookie.createInitial(player.getGameProfile(), false)) {
+                @Override
+                public void send(Packet<?> packet) {
+                    // Input and cursor updates are valid too; watch the result and the former wrong target.
+                    if (packet instanceof ClientboundContainerSetSlotPacket update
+                            && update.getContainerId() == menu.containerId && (update.getSlot() == 0 || update.getSlot() == 63)) {
+                        updates.add(update);
+                    }
+                }
+            };
+
+            menu.setCarried(new ItemStack(Items.OAK_LOG));
+            menu.clicked(64, 0, ClickType.PICKUP, player);
+            test.assertTrue(menu.getCarried().isEmpty() && menu.getSlot(64).getItem().is(Items.OAK_LOG),
+                    "Clicking a crafting input places the carried item");
+            test.assertTrue(menu.getSlot(63).getItem().is(Items.OAK_PLANKS), "The crafting result is available");
+            test.assertTrue(!updates.isEmpty(), "Crafting sends an immediate result update");
+            test.assertTrue(updates.stream().allMatch(update -> update.getContainerId() == menu.containerId && update.getSlot() == 63),
+                    "Result updates target the crafting output, not transmutation input zero");
+            test.assertTrue(updates.getLast().getItem().is(Items.OAK_PLANKS), "The client receives the crafting result");
+
+            menu.clicked(64, 1, ClickType.PICKUP, player);
+            test.assertTrue(menu.getCarried().is(Items.OAK_LOG) && !menu.getSlot(64).hasItem(),
+                    "Right-clicking a crafting input picks it up without dropping it");
+            test.assertTrue(updates.getLast().getItem().isEmpty(), "Removing the recipe clears the client's output");
+            menu.clicked(64, 0, ClickType.PICKUP, player);
+            menu.clicked(63, 0, ClickType.PICKUP, player);
+            test.assertTrue(menu.getCarried().is(Items.OAK_PLANKS) && menu.getCarried().getCount() == 4,
+                    "Clicking the crafting output puts the result on the cursor");
+            test.assertTrue(!menu.getSlot(64).hasItem() && !menu.getSlot(63).hasItem(), "Crafting consumes the input once");
+            test.assertTrue(!menu.getSlot(0).hasItem(), "Crafting never overwrites the first transmutation input");
+            test.succeed();
+        } finally {
+            player.connection = connection;
             player.closeContainer();
             test.getLevel().getServer().getPlayerList().remove(player);
         }
